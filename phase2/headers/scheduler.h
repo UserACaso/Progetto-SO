@@ -4,5 +4,4 @@
 #include <uriscv/liburiscv.h>
 
 void scheduler();
-
 #endif

@@ -1,5 +1,17 @@
 #include "./headers/initial.h"
 
+
+int Process_Count;
+struct list_head Ready_Queue;
+pcb_PTR Current_Process[NCPU]; // da inizializzare a NULL
+int SemaphoreDisk[8];
+int SemaphoreFlash[8];
+int SemaphoreNetwork[8];
+int SemaphorePrinter[8];
+int SemaphoreTerminal[16];
+int SemaphorePseudo;
+unsigned volatile int Global_Lock;
+
 void exceptionHandler() {
     unsigned int cause = getCAUSE();
     
@@ -27,6 +39,17 @@ void exceptionHandler() {
         }
     }
 }
+
+// From gcc/libgcc/memcpy.c
+void *memcpy(void *dest, const void *src, unsigned int len)
+{
+  char *d = dest;
+  const char *s = src;
+  while (len--)
+    *d++ = *s++;
+  return dest;
+}
+
 
 int main(){
  	Process_Count = 0;
