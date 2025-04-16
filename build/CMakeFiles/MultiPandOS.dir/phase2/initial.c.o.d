@@ -14,5 +14,4 @@ CMakeFiles/MultiPandOS.dir/phase2/initial.c.o: \
  /home/user/Desktop/testtttt\ (copy)/phase2/./headers/././initial.h \
  /home/user/Desktop/testtttt\ (copy)/phase2/./headers/./exceptions.h \
  /home/user/Desktop/testtttt\ (copy)/phase2/./headers/./initial.h \
- /home/user/Desktop/testtttt\ (copy)/phase2/./headers/./scheduler.h \
- /home/user/Desktop/testtttt\ (copy)/phase2/klog.c
+ /home/user/Desktop/testtttt\ (copy)/phase2/./headers/./scheduler.h

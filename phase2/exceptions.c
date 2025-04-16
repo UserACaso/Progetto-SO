@@ -20,7 +20,7 @@
                      bisogna segnalare all'utente che non è possibile bloccare il processo (PANIC()).
 */
 
-void Passeren(state_t* syscallState, int cpuid, pcb_PTR corrente){
+void Passeren(state_t* syscallState, pcb_PTR corrente){
     cpu_t current_time_inizio, current_time_fine;
     STCK(current_time_inizio);
     memaddr* semaddr = (memaddr *)syscallState->reg_a1; //semaddr contiene l'indirizzo del semaforo   
@@ -42,6 +42,7 @@ void Passeren(state_t* syscallState, int cpuid, pcb_PTR corrente){
     } else { //process is blocked on the ASL and the Scheduler is called
         syscallState->pc_epc += 4;
         corrente->p_s = *syscallState;
+        corrente->p_semAdd = semaddr;
         int temp = insertBlocked((int*)semaddr, corrente);
         if (temp == 1) //se non è possibile creare nuovi processi
         { /* gestione errore del semaforo, magari gestire con una trap */
@@ -57,7 +58,7 @@ void Passeren(state_t* syscallState, int cpuid, pcb_PTR corrente){
     
 }
 
-void Verhogen(state_t* syscallState, int cpuid, pcb_PTR corrente){
+void Verhogen(state_t* syscallState, pcb_PTR corrente){
     cpu_t current_time_inizio, current_time_fine;
     STCK(current_time_inizio);
     memaddr* semaddr = (memaddr *)syscallState->reg_a1;
@@ -79,6 +80,7 @@ void Verhogen(state_t* syscallState, int cpuid, pcb_PTR corrente){
     } else { //process is blocked on the ASL and the Scheduler is called
         syscallState->pc_epc += 4;
         corrente->p_s = *syscallState;
+        corrente->p_semAdd = semaddr;
         int temp = insertBlocked((int*)semaddr, corrente);
         if (temp == 1) //se non è possibile creare nuovi processi
         { /* gestione errore del semaforo */
@@ -93,9 +95,24 @@ void Verhogen(state_t* syscallState, int cpuid, pcb_PTR corrente){
     
 }
 
-void WaitForClock() {
-    //ma se io ho piu processi bloccati devo sbloccarli tutti o uno alla volta?
-    //copiare l'ultimo else della P
+void WaitForClock(state_t* syscallState, pcb_PTR corrente) {
+    cpu_t current_time_inizio, current_time_fine;
+    STCK(current_time_inizio);
+    memaddr* semaddr = &SemaphorePseudo; 
+    syscallState->pc_epc += 4;
+    corrente->p_s = *syscallState;
+    corrente->p_semAdd = semaddr;
+    int temp = insertBlocked((int*)semaddr, corrente);
+    if (temp == 1) //se non è possibile creare nuovi processi
+    { /* gestione errore del semaforo, magari gestire con una trap */
+        PANIC();
+    }
+    
+    STCK(current_time_fine); //incremento cpu time del processo corrente
+    corrente->p_time += current_time_fine - current_time_inizio;
+    RELEASE_LOCK(&Global_Lock); 
+    scheduler();
+    
 }
 
 void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
@@ -113,11 +130,11 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
         break;
     
     case -3: //Passeren (P) 
-        Passeren(syscallState, cpuid, corrente);
+        Passeren(syscallState, corrente);
         break;
 
     case -4: //Verhogen (V)
-        Verhogen(syscallState, cpuid, corrente);
+        Verhogen(syscallState, corrente);
         break;
 
     case -5: //DoIO (NSYS5) *
@@ -127,8 +144,8 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
         //ritorna p_supportStruct
         break;
     
-    case -7: //WaitForClock (NSYS7) *
-
+    case -7: //WaitForClock (NSYS7)
+        WaitForClock(syscallState, corrente);
         break;
 
     case -8: //GetSupportData (NSYS8)

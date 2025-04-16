@@ -66,8 +66,9 @@ int main(){
             passupvector->tlb_refill_stackPtr= KERNELSTACK;
             passupvector->exception_stackPtr = KERNELSTACK;
         } else {
-            passupvector->tlb_refill_stackPtr= 0x20020000 + (cpu_id * PAGESIZE);
+            passupvector->tlb_refill_stackPtr= (cpu_id * PAGESIZE) + (64 * PAGESIZE) + RAMSTART;
             passupvector->exception_stackPtr = 0x20020000 + (cpu_id * PAGESIZE);
+            //RAMSTART + (64 * PAGESIZE) + (cpu_id * PAGESIZE)
         }
         passupvector->exception_handler = (memaddr)exceptionHandler;
     }
@@ -82,7 +83,7 @@ int main(){
     initPcbs();
     Current_Process[0] = NULL; //inizializzo il puntatore al processo corrente a NULL
 
-    //Inizializzazione liste dei processi bloccapti per ogni semaforo
+    //Inizializzazione liste dei processi bloccanti per ogni semaforo
     for (int i = 0; i < 8; i++)
     {
         SemaphoreFlash[i] = 0;
@@ -110,12 +111,13 @@ int main(){
     for (int i = 0; i < IRT_NUM_ENTRY; i++) {
         memaddr irt_addr;
         if (i == 0) {
-            irt_addr = IRT_START; 
+            irt_addr = IRT_START;
         } else if (i == 1) {
             irt_addr = IRT_START + 0x20;  // Special jump for second entry
         } else {    
             irt_addr = IRT_START + 0x20 + ((i-1) * 0x4);  // Regular pattern after
         }
+        //(?) 0-5, 6-12, 13-19 ... ;cpu 0, cpu 1, cpu 2, ... ; bit 0 a 1, bit 1 a 1, bit 2 a 1 ...
         *((memaddr *)irt_addr) = IRT_RP_BIT_ON | ((1 << NCPU) - 1);
     }
     
@@ -138,6 +140,7 @@ int main(){
         INITCPU(cpu_id, &otherCPU); //accendo la cpu con indirizzo cpu_id;
     }
     *((memaddr *)TPR) = 0;
-    return 0; //non dorvebbe mai raggiungerlo
-    //includere la funzione test in qualche modo (all'inizio), (i .h faranno forse conflitto)
+    scheduler();
+    
+    return 0; //non dovrebbe mai raggiungerlo
 }

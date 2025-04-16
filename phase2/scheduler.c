@@ -1,5 +1,13 @@
 #include "./headers/scheduler.h"
+#include "klog.c"
+
+void bp(){
+
+}
 
 void scheduler(){
-    PANIC();
+    while (1)
+    {
+        WAIT();
+    }
 }
