@@ -10,6 +10,7 @@
         "pcb.h": "c",
         "interrupts.h": "c",
         "scheduler.h": "c",
-        "exceptions.h": "c"
+        "exceptions.h": "c",
+        "*.e": "c"
     }
 }

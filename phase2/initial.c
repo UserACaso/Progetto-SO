@@ -14,14 +14,13 @@ unsigned volatile int Global_Lock;
 
 void exceptionHandler() {
     unsigned int cause = getCAUSE();
-    
+    unsigned int excode = cause & CAUSE_EXCCODE_MASK; // estraiamo eccezione tramite and con la maschera
     // Interrupt?     Exception code (excode)
     //     0          000101010101010101010101010101010
 
     if (CAUSE_IS_INT(cause)) {
-        InterruptHandler();
+        InterruptHandler(excode);
     }else{
-        unsigned int excode = cause & CAUSE_EXCCODE_MASK;     // estraiamo eccezione tramite and con la maschera
         switch (excode) 
         {
             case 24 ... 28:  //For exception codes 24-28 (TLB exceptions), processing should be passed along to your Nucleus’s TLB exception handler
@@ -34,7 +33,7 @@ void exceptionHandler() {
                 SYSCALLHandler(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID());
                 break;
             default:   //For other exception codes 0-7, 9, 10, 12-23 (Program Traps), processing should be passed along to your Nucleus’s Program Trap exception handler
-                TRAPHandler(); 
+                TRAPHandler(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID()); 
                 break;
         }
     }
@@ -66,7 +65,7 @@ int main(){
             passupvector->tlb_refill_stackPtr= KERNELSTACK;
             passupvector->exception_stackPtr = KERNELSTACK;
         } else {
-            passupvector->tlb_refill_stackPtr= (cpu_id * PAGESIZE) + (64 * PAGESIZE) + RAMSTART;
+            passupvector->tlb_refill_stackPtr = (cpu_id * PAGESIZE) + (64 * PAGESIZE) + RAMSTART;
             passupvector->exception_stackPtr = 0x20020000 + (cpu_id * PAGESIZE);
             //RAMSTART + (64 * PAGESIZE) + (cpu_id * PAGESIZE)
         }
@@ -129,10 +128,6 @@ int main(){
         state_t otherCPU; //creo uno stato per ogni processore (escluso CPU0)
         otherCPU.status = MSTATUS_MPP_M;  
         otherCPU.pc_epc = (memaddr)scheduler;
-        for (int j = 0; j < STATE_GPR_LEN; j++) {
-            otherCPU.gpr[j] = 0;
-        }
-        
         otherCPU.reg_sp = 0x20020000 + (cpu_id * PAGESIZE);
         otherCPU.cause = 0;
         otherCPU.mie = 0;

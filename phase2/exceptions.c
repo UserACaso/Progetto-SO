@@ -119,6 +119,12 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
     ACQUIRE_LOCK(&Global_Lock);
     pcb_PTR corrente = Current_Process[cpuid];
     
+    if(corrente->p_s.status & MSTATUS_MPP_MASK != MSTATUS_MPP_M)
+    {   
+        TRAPHandler(syscallState, cpuid);    
+        return;
+    }
+
     switch(syscallState->reg_a0) //only in kernel mode (if in user mode -> program trap)
     {
     case -1: //Create Process (SYS1)
@@ -133,7 +139,7 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
         Passeren(syscallState, corrente);
         break;
 
-    case -4: //Verhogen (V)
+    case -4: // Verhogen (V)
         Verhogen(syscallState, corrente);
         break;
 
@@ -156,8 +162,8 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
         //ritorna
         break;
     
-    default: // Program Trap exception *
-        
+    default: // Program Trap exception
+        TRAPHandler(syscallState, cpuid);
         break;
     }
 }
@@ -165,6 +171,18 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
 void TLBHandler(){
     
 }
-void TRAPHandler() {
+void TRAPHandler(state_t* syscallState, unsigned int cpuid) {
+    if (Current_Process[cpuid]->p_supportStruct == NULL) //kill 🏫🔫
+    {
+        ACQUIRE_LOCK(&Global_Lock);
+        //Process_Count reajusted
+            
+        //all PCB A PCB is either the Current Process (“running”), 
+        //sitting on the Ready Queue (“ready”), 
+        //blocked waiting for device (“blocked”), 
+        //or blocked waiting for non-device (“blocked”).
+        //caso in cui il processo figlio ha 2 filgi e in cui uno dei due figli ha 
+        RELEASE_LOCK(&Global_Lock);
+    }
     
 }

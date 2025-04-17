@@ -3,6 +3,6 @@
 
 #include "./initial.h"
 
-void InterruptHandler();
+void InterruptHandler(unsigned int excode);
 
 #endif
