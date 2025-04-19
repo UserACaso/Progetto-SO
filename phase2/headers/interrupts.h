@@ -3,6 +3,9 @@
 
 #include "./initial.h"
 
-void InterruptHandler(unsigned int excode);
+void InterruptHandler(state_t* syscallState, unsigned int excode);
+void PLTHandler();
+void DeviceHandler(unsigned int bitMask, int IntlineNo);
+void PseudoClockHandler();
 
 #endif

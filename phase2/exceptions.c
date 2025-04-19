@@ -127,38 +127,38 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
 
     switch(syscallState->reg_a0) //only in kernel mode (if in user mode -> program trap)
     {
-    case -1: //Create Process (SYS1)
+    case CREATEPROCESS: //Create Process (SYS1)
         
         break;
 
-    case -2: //Terminate Process (SYS2)
+    case TERMPROCESS: //Terminate Process (SYS2)
         
         break;
     
-    case -3: //Passeren (P) 
+    case PASSEREN: //Passeren (P)
         Passeren(syscallState, corrente);
         break;
 
-    case -4: // Verhogen (V)
+    case VERHOGEN: // Verhogen (V)
         Verhogen(syscallState, corrente);
         break;
 
-    case -5: //DoIO (NSYS5) *
+    case DOIO: //DoIO (NSYS5) *
         //ritorna
         break;
-    case -6: //GetCPUTime (NSYS6)
+    case GETTIME: //GetCPUTime (NSYS6)
         //ritorna p_supportStruct
         break;
     
-    case -7: //WaitForClock (NSYS7)
+    case CLOCKWAIT: //WaitForClock (NSYS7)
         WaitForClock(syscallState, corrente);
         break;
 
-    case -8: //GetSupportData (NSYS8)
+    case GETSUPPORTPTR: //GetSupportData (NSYS8)
         //ritorna
         break;
     
-    case -9: //GetProcessID (NSYS9)
+    case GETPROCESSID: //GetProcessID (NSYS9)
         //ritorna
         break;
     
@@ -181,7 +181,7 @@ void TRAPHandler(state_t* syscallState, unsigned int cpuid) {
         //sitting on the Ready Queue (“ready”), 
         //blocked waiting for device (“blocked”), 
         //or blocked waiting for non-device (“blocked”).
-        //caso in cui il processo figlio ha 2 filgi e in cui uno dei due figli ha 
+        //caso in cui il processo figlio ha 2 figli e in cui uno dei due figli ha 
         RELEASE_LOCK(&Global_Lock);
     }
     

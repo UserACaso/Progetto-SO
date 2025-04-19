@@ -19,7 +19,7 @@ void exceptionHandler() {
     //     0          000101010101010101010101010101010
 
     if (CAUSE_IS_INT(cause)) {
-        InterruptHandler(excode);
+        InterruptHandler(GET_EXCEPTION_STATE_PTR(getPRID()), excode);
     }else{
         switch (excode) 
         {
@@ -106,7 +106,6 @@ int main(){
     RAMTOP(first->p_s.reg_sp); // da 0x20001000 (Kernelstack) in su, ma lo stack cresce verso il basso
     first->p_s.pc_epc = (memaddr) test;
 
-    // Try this approach for IRT initialization
     for (int i = 0; i < IRT_NUM_ENTRY; i++) {
         memaddr irt_addr;
         if (i == 0) {
@@ -116,10 +115,9 @@ int main(){
         } else {    
             irt_addr = IRT_START + 0x20 + ((i-1) * 0x4);  // Regular pattern after
         }
-        //(?) 0-5, 6-12, 13-19 ... ;cpu 0, cpu 1, cpu 2, ... ; bit 0 a 1, bit 1 a 1, bit 2 a 1 ...
         *((memaddr *)irt_addr) = IRT_RP_BIT_ON | ((1 << NCPU) - 1);
     }
-    
+
 
     //per le NCPU-1:
     
@@ -134,8 +132,8 @@ int main(){
         otherCPU.entry_hi = 0;
         INITCPU(cpu_id, &otherCPU); //accendo la cpu con indirizzo cpu_id;
     }
-    *((memaddr *)TPR) = 0;
+    *((memaddr *)TPR) = 0; //deve essere settato per ogni singolo processore
     scheduler();
     
-    return 0; //non dovrebbe mai raggiungerlo
+    return 0; //non dovrebbe mai raggiungerlo, messo per sicurezza
 }
