@@ -21,6 +21,7 @@ extern int SemaphoreNetwork[8];
 extern int SemaphorePrinter[8];
 extern int SemaphoreTerminal[16];
 extern int SemaphorePseudo;
+extern int PassTest;
 extern unsigned volatile int Global_Lock;
 extern void *memcpy(void *dest, const void *src, unsigned int len);
 void exceptionHandler();

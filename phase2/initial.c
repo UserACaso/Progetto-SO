@@ -10,6 +10,7 @@ int SemaphoreNetwork[8];
 int SemaphorePrinter[8];
 int SemaphoreTerminal[16];
 int SemaphorePseudo;
+int PassTest = 0;
 unsigned volatile int Global_Lock;
 
 void exceptionHandler() {

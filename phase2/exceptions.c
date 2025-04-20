@@ -20,7 +20,7 @@
                      bisogna segnalare all'utente che non è possibile bloccare il processo (PANIC()).
 */
 
-void Passeren(state_t* syscallState, pcb_PTR corrente){
+void Passeren(state_t* syscallState, pcb_PTR corrente, int lock_acquired){
     cpu_t current_time_inizio, current_time_fine;
     STCK(current_time_inizio);
     memaddr* semaddr = (memaddr *)syscallState->reg_a1; //semaddr contiene l'indirizzo del semaforo   
@@ -30,15 +30,21 @@ void Passeren(state_t* syscallState, pcb_PTR corrente){
         STCK(current_time_fine);
         corrente->p_time += current_time_fine - current_time_inizio;
         insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
+        if (lock_acquired)
+        {
+            RELEASE_LOCK(&Global_Lock); 
+        }
         LDST(syscallState);
-        RELEASE_LOCK(&Global_Lock); //fatto prima di richiamare lo scheduler
     } else if (*semaddr == 1){ // control is returned to the Current Process of the current processor
         *semaddr = 0; 
         syscallState->pc_epc += 4; 
         STCK(current_time_fine);
         corrente->p_time += current_time_fine - current_time_inizio;
+        if (lock_acquired)
+        {
+            RELEASE_LOCK(&Global_Lock); 
+        }
         LDST(syscallState);
-        RELEASE_LOCK(&Global_Lock);
     } else { //process is blocked on the ASL and the Scheduler is called
         syscallState->pc_epc += 4;
         corrente->p_s = *syscallState;
@@ -51,14 +57,17 @@ void Passeren(state_t* syscallState, pcb_PTR corrente){
         
         STCK(current_time_fine); //incremento cpu time del processo corrente
         corrente->p_time += current_time_fine - current_time_inizio;
-        RELEASE_LOCK(&Global_Lock); 
+        if (lock_acquired)
+        {
+            RELEASE_LOCK(&Global_Lock); //here
+        }
         scheduler();
 
     }
     
 }
 
-void Verhogen(state_t* syscallState, pcb_PTR corrente){
+void Verhogen(state_t* syscallState, pcb_PTR corrente, int lock_acquired){
     cpu_t current_time_inizio, current_time_fine;
     STCK(current_time_inizio);
     memaddr* semaddr = (memaddr *)syscallState->reg_a1;
@@ -68,15 +77,21 @@ void Verhogen(state_t* syscallState, pcb_PTR corrente){
         STCK(current_time_fine);
         corrente->p_time += current_time_fine - current_time_inizio;
         insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
+        if (lock_acquired)
+        {
+            RELEASE_LOCK(&Global_Lock); 
+        }
         LDST(syscallState);
-        RELEASE_LOCK(&Global_Lock); 
     } else if (*semaddr == 0){// control is returned to the Current Process of the current processor
         *semaddr = 1;
         syscallState->pc_epc += 4;
         STCK(current_time_fine);
         corrente->p_time += current_time_fine - current_time_inizio;
+        if (lock_acquired)
+        {
+            RELEASE_LOCK(&Global_Lock); 
+        }
         LDST(syscallState);
-        RELEASE_LOCK(&Global_Lock); 
     } else { //process is blocked on the ASL and the Scheduler is called
         syscallState->pc_epc += 4;
         corrente->p_s = *syscallState;
@@ -89,7 +104,10 @@ void Verhogen(state_t* syscallState, pcb_PTR corrente){
         
         STCK(current_time_fine); //incremento cpu time del processo corrente
         corrente->p_time += current_time_fine - current_time_inizio;
-        RELEASE_LOCK(&Global_Lock); 
+        if (lock_acquired)
+        {
+            RELEASE_LOCK(&Global_Lock); //here
+        }
         scheduler();
     }
     
@@ -116,9 +134,14 @@ void WaitForClock(state_t* syscallState, pcb_PTR corrente) {
 }
 
 void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
-    ACQUIRE_LOCK(&Global_Lock);
+    int lock_aquired = 0;
+    if (!PassTest)
+    {
+        ACQUIRE_LOCK(&Global_Lock);
+        lock_aquired = 1;
+    }
+
     pcb_PTR corrente = Current_Process[cpuid];
-    
     if(corrente->p_s.status & MSTATUS_MPP_MASK != MSTATUS_MPP_M)
     {   
         TRAPHandler(syscallState, cpuid);    
@@ -136,11 +159,11 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
         break;
     
     case PASSEREN: //Passeren (P)
-        Passeren(syscallState, corrente);
+        Passeren(syscallState, corrente, lock_aquired);
         break;
 
     case VERHOGEN: // Verhogen (V)
-        Verhogen(syscallState, corrente);
+        Verhogen(syscallState, corrente, lock_aquired);
         break;
 
     case DOIO: //DoIO (NSYS5) *

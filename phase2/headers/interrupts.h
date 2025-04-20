@@ -5,7 +5,8 @@
 
 void InterruptHandler(state_t* syscallState, unsigned int excode);
 void PLTHandler();
-void DeviceHandler(unsigned int bitMask, int IntlineNo);
+void DeviceHandler(int IntlineNo, int DevNo);
 void PseudoClockHandler();
+int DevNOGet(unsigned int Devices);
 
 #endif

@@ -8,15 +8,55 @@ void PseudoClockHandler(){
     
 }
 
-void DeviceHandler(int IntlineNo){
+void DeviceHandler(int IntlineNo, int DevNo){
+    devreg_t* devAddrBase = 0x10000054 + ((IntlineNo - 3) * 0x80) + (DevNo * 0x10);
+    unsigned int status;
+    if(IntlineNo != 7)
+    {
+        status = devAddrBase->dtp.status;
+        devAddrBase->dtp.command = ACK;
+    }
+    else
+    {    
+        status = devAddrBase->term.recv_status;
+        devAddrBase->term.recv_command = ACK;
+    }
+    
+    int indirizzo;
+    switch (IntlineNo)
+    {
+        case 3: //IL_DISK 
+            indirizzo = SemaphoreDisk[DevNo];
+            break;
+        case 4: //IL_FLASH
+            indirizzo = SemaphoreFlash[DevNo];
+            break;
+        case 5: //IL_ETHERNET
+            indirizzo = SemaphoreNetwork[DevNo];
+            break;
+        case 6: //IL_PRINTER
+            indirizzo = SemaphorePrinter[DevNo];
+            break;
+        case 7: //IL_TERMINAL 
+            indirizzo = SemaphoreTerminal[DevNo];
+            break;
+    }
+
+    PassTest = 1;
+    SYSCALL(VERHOGEN, &indirizzo, 0, 0);
+    PassTest = 0; //si puo omettere se viene fatto gia dentro alla syscall
+    pcb_t *proc = headBlocked(&indirizzo); 
+    /*Qui abbiamo deciso di modificare la Veroghen e la Passeren, permettendo una sorta di "passaggio del testimone": se non usassimo
+      questo espediente, con la chiamata di SYSCALL, avremmo un altro ACQUIRELOCK (cosa che vogliamo evitare).*/
+      //NOTA COSA SUCEDE SE LA SYSCALL VEROGHEN SI BLOCCA SU UN SEMAFORO E VIENE CHIAMATO LO SCHEDULER (e' possibile?)
 }
 
-int DevNOGet(unsigned int Devices) {
-    //Stavo pensando a una cosa: se, per esempio, abbiamo un Interrupt nella Linea 3 dipositivo 0: quando controlliamo altrin interrupt
-    //pendenti non possono essercene altri in quella stessa area di memoria (ossia Linea 3, dispositivo 0) finché quell'interrupt non viene risolta.
-    //Credo eh.
-
-    
+int DevNOGet(unsigned int Linea) {
+    unsigned int temp = 0;
+    for(int i = 0; i < 7; i++){
+        if(*((memaddr *)(0x10000040) + (Linea-3)*0x4 ) & (DEV0ON << i))
+        return i;
+    }
 }
 
 void InterruptHandler(state_t* syscallState, unsigned int excode){
@@ -28,42 +68,19 @@ void InterruptHandler(state_t* syscallState, unsigned int excode){
         unsigned int temp = 0;
         if ((temp = CAUSE_IP_GET(cause, i))) {
             switch (i) {
-                case IL_CPUTIMER:
+                case 1:
                     PLTHandler();
                     break;
-                case IL_TIMER:
+                case 2:
                     PseudoClockHandler();
                     break;
                 default:
-                    //
-                    DeviceHandler(i);
+                    DeviceHandler(i, DevNOGet(i));
                     break;
             }
             break;
         }
     }
-    // for (int i = 0; i < 7; i++)
-    // {
-    //     if (i == 0 && getTIMER() == 0 ){
-    //         //gestione interrupt della linea 1: PLT (Processor Local Timer)
-    //         PLTHandler();
-    //         break;
-    //     } else if (i == 1 && (*((cpu_t *)INTERVALTMR)) == 0) {
-    //         //gestione interrupt della linea 1: Pseudo-Clock (riguarda tutte le CPU)
-    //         PseudoClockHandler();
-    //         break;
-    //     } else if (i >=2 && (bitMask = *((memaddr *)(0x10000040 + (0x04) * (i-2)))) && bitMask != 0){ //indirizzo fisico della linea del device
-    //         unsigned int temp = 0;
-    //         for (int i = 0; i < 7; ++i) {
-    //             if (i == 0)
-    //             if ((temp = bitMask & DEV0ON << i)) //calcolare il device corrispondente magari utilizzare CAUSE_IP
-    //         }
-    //
-    //         DeviceHandler(bitMask, i+1);
-    //         break;
-    //     }
-    //     CAUSE_IP_GET(cause, 3); //controlla se vi sono degli interrupt pendenti della linea 3.
-    // }
 
     RELEASE_LOCK(&Global_Lock);
 
