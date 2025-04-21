@@ -8,9 +8,9 @@ int SemaphoreDisk[8];
 int SemaphoreFlash[8];
 int SemaphoreNetwork[8];
 int SemaphorePrinter[8];
-int SemaphoreTerminal[16];
+int SemaphoreTerminalReceiver[8];
+int SemaphoreTerminalTransmitter[8];
 int SemaphorePseudo;
-int PassTest = 0;
 unsigned volatile int Global_Lock;
 
 void exceptionHandler() {
@@ -90,10 +90,8 @@ int main(){
         SemaphoreDisk[i] = 0;
         SemaphoreNetwork[i] = 0;
         SemaphorePrinter[i] = 0;
-    }
-    for (int i = 0; i < 16; i++)
-    {
-        SemaphoreTerminal[i] = 0;
+        SemaphoreTerminalReceiver[i] = 0;
+        SemaphoreTerminalTransmitter[i] = 0;
     }
     SemaphorePseudo = 0;
     LDIT(PSECOND); //imposta l'intervallo di tempo a 100ms

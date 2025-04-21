@@ -1,88 +1,128 @@
 #include "./headers/interrupts.h"
 
-void PLTHandler() {
 
+//LDST: RIABILITA LE INTERRUPT.
+
+void PLTHandler(state_t* syscallState) {
+    //Acknowledge the PLT interrupt by loading the timer with a new value using setTIMER.
+    setTIMER(TIMESLICE);
+    int processore = getPRID();
+    //Copy the processor state of the current CPU at the time of the exception into the Current Process’s PCB (p_s) of the current CPU.
+    pcb_PTR corrente = Current_Process[processore];
+    corrente->p_s = *syscallState;
+    //Place the Current Process on the Ready Queue; transitioning the Current Process from the “running” state to the “ready” state.
+    Current_Process[processore] = NULL;
+    insertProcQ(&Ready_Queue, corrente);
+    
+    RELEASE_LOCK(&Global_Lock);
+    scheduler();
 }
 
-void PseudoClockHandler(){
+void PseudoClockHandler(state_t* syscallState){
+    LDIT(PSECOND);
+    
+    int* indirizzo = &SemaphorePseudo; 
+    pcb_PTR blockedProc = NULL;
+    while (1)
+    {
+        if (*indirizzo == 0 && ((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){
+            insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
+        } else {
+            break;
+        }
+    }
+    RELEASE_LOCK(&Global_Lock);
+    if (Current_Process[getPRID()] == NULL)
+    {
+        scheduler();
+    }else {//carica lo stato del processore prima delll'interrupt
+        LDST(syscallState);
+    }
     
 }
 
-void DeviceHandler(int IntlineNo, int DevNo){
+void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
     devreg_t* devAddrBase = 0x10000054 + ((IntlineNo - 3) * 0x80) + (DevNo * 0x10);
-    unsigned int status;
+    unsigned int status, status_rc, status_tr;
     if(IntlineNo != 7)
     {
         status = devAddrBase->dtp.status;
         devAddrBase->dtp.command = ACK;
     }
     else
-    {    
-        status = devAddrBase->term.recv_status;
+    {   
+        status_rc = devAddrBase->term.recv_status;
+        
+        status_tr = devAddrBase->term.transm_status;
         devAddrBase->term.recv_command = ACK;
     }
     
-    int indirizzo;
+    int* indirizzo;
     switch (IntlineNo)
     {
         case 3: //IL_DISK 
-            indirizzo = SemaphoreDisk[DevNo];
+            indirizzo = &SemaphoreDisk[DevNo];
             break;
         case 4: //IL_FLASH
-            indirizzo = SemaphoreFlash[DevNo];
+            indirizzo = &SemaphoreFlash[DevNo];
             break;
         case 5: //IL_ETHERNET
-            indirizzo = SemaphoreNetwork[DevNo];
+            indirizzo = &SemaphoreNetwork[DevNo];
             break;
         case 6: //IL_PRINTER
-            indirizzo = SemaphorePrinter[DevNo];
+            indirizzo = &SemaphorePrinter[DevNo];
             break;
         case 7: //IL_TERMINAL 
-            indirizzo = SemaphoreTerminal[DevNo];
+            indirizzo = &SemaphoreTerminal[DevNo];//cambiare
             break;
     }
 
-    PassTest = 1;
-    SYSCALL(VERHOGEN, &indirizzo, 0, 0);
-    PassTest = 0; //si puo omettere se viene fatto gia dentro alla syscall
-    pcb_t *proc = headBlocked(&indirizzo); 
-    /*Qui abbiamo deciso di modificare la Veroghen e la Passeren, permettendo una sorta di "passaggio del testimone": se non usassimo
-      questo espediente, con la chiamata di SYSCALL, avremmo un altro ACQUIRELOCK (cosa che vogliamo evitare).*/
-      //NOTA COSA SUCEDE SE LA SYSCALL VEROGHEN SI BLOCCA SU UN SEMAFORO E VIENE CHIAMATO LO SCHEDULER (e' possibile?)
+    pcb_PTR blockedProc = NULL;
+    if (*indirizzo == 0 && ((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB 
+        blockedProc->p_s.reg_a0 = status;
+        insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
+    }
+    
+    RELEASE_LOCK(&Global_Lock);
+    if (Current_Process[getPRID()] == NULL)
+    {
+        scheduler();
+    }else {//carica lo stato del processore prima delll'interrupt
+        LDST(syscallState);
+    }
+        
 }
 
 int DevNOGet(unsigned int Linea) {
     unsigned int temp = 0;
-    for(int i = 0; i < 7; i++){
-        if(*((memaddr *)(0x10000040) + (Linea-3)*0x4 ) & (DEV0ON << i))
-        return i;
+    for(int i = 0; i < 7; i++){ //ritorna il device della linea
+        if(*((memaddr *)(0x10000040) + (Linea-3)*0x4 ) & (DEV0ON << i)){
+            return i;
+        }
     }
+    PANIC();
 }
-
+//NOTA: "syscallState" è lo stato del processore un attimo prima dell'arrivo dell'interrupt
 void InterruptHandler(state_t* syscallState, unsigned int excode){
     ACQUIRE_LOCK(&Global_Lock);
-    getMIP(); //machine interrupt pending
-    //getMIE(); //machine interrupt enabled
     unsigned int cause = getCAUSE();
     for (int i = 0; i < 8; ++i) {
         unsigned int temp = 0;
         if ((temp = CAUSE_IP_GET(cause, i))) {
             switch (i) {
                 case 1:
-                    PLTHandler();
+                    PLTHandler(syscallState);
                     break;
                 case 2:
-                    PseudoClockHandler();
+                    PseudoClockHandler(syscallState);
                     break;
                 default:
-                    DeviceHandler(i, DevNOGet(i));
+                    DeviceHandler(i, DevNOGet(i), syscallState);
                     break;
             }
             break;
         }
     }
-
-    RELEASE_LOCK(&Global_Lock);
 
     //controllo che vi siano degli interrupt a priorità più alta (partendo dal basso)
     //se arriva un interrupt quando tutti i processori sono occupati, (e poi ne arriva un altra ancora)

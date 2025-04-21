@@ -20,7 +20,7 @@
                      bisogna segnalare all'utente che non è possibile bloccare il processo (PANIC()).
 */
 
-void Passeren(state_t* syscallState, pcb_PTR corrente, int lock_acquired){
+void Passeren(state_t* syscallState, pcb_PTR corrente){
     cpu_t current_time_inizio, current_time_fine;
     STCK(current_time_inizio);
     memaddr* semaddr = (memaddr *)syscallState->reg_a1; //semaddr contiene l'indirizzo del semaforo   
@@ -30,20 +30,14 @@ void Passeren(state_t* syscallState, pcb_PTR corrente, int lock_acquired){
         STCK(current_time_fine);
         corrente->p_time += current_time_fine - current_time_inizio;
         insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
-        if (lock_acquired)
-        {
-            RELEASE_LOCK(&Global_Lock); 
-        }
+        RELEASE_LOCK(&Global_Lock); 
         LDST(syscallState);
     } else if (*semaddr == 1){ // control is returned to the Current Process of the current processor
         *semaddr = 0; 
         syscallState->pc_epc += 4; 
         STCK(current_time_fine);
         corrente->p_time += current_time_fine - current_time_inizio;
-        if (lock_acquired)
-        {
-            RELEASE_LOCK(&Global_Lock); 
-        }
+        RELEASE_LOCK(&Global_Lock); 
         LDST(syscallState);
     } else { //process is blocked on the ASL and the Scheduler is called
         syscallState->pc_epc += 4;
@@ -57,17 +51,14 @@ void Passeren(state_t* syscallState, pcb_PTR corrente, int lock_acquired){
         
         STCK(current_time_fine); //incremento cpu time del processo corrente
         corrente->p_time += current_time_fine - current_time_inizio;
-        if (lock_acquired)
-        {
-            RELEASE_LOCK(&Global_Lock); //here
-        }
+        RELEASE_LOCK(&Global_Lock); //here
         scheduler();
 
     }
     
 }
 
-void Verhogen(state_t* syscallState, pcb_PTR corrente, int lock_acquired){
+void Verhogen(state_t* syscallState, pcb_PTR corrente){
     cpu_t current_time_inizio, current_time_fine;
     STCK(current_time_inizio);
     memaddr* semaddr = (memaddr *)syscallState->reg_a1;
@@ -77,20 +68,14 @@ void Verhogen(state_t* syscallState, pcb_PTR corrente, int lock_acquired){
         STCK(current_time_fine);
         corrente->p_time += current_time_fine - current_time_inizio;
         insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
-        if (lock_acquired)
-        {
-            RELEASE_LOCK(&Global_Lock); 
-        }
+        RELEASE_LOCK(&Global_Lock); 
         LDST(syscallState);
     } else if (*semaddr == 0){// control is returned to the Current Process of the current processor
         *semaddr = 1;
         syscallState->pc_epc += 4;
         STCK(current_time_fine);
         corrente->p_time += current_time_fine - current_time_inizio;
-        if (lock_acquired)
-        {
-            RELEASE_LOCK(&Global_Lock); 
-        }
+        RELEASE_LOCK(&Global_Lock); 
         LDST(syscallState);
     } else { //process is blocked on the ASL and the Scheduler is called
         syscallState->pc_epc += 4;
@@ -104,10 +89,8 @@ void Verhogen(state_t* syscallState, pcb_PTR corrente, int lock_acquired){
         
         STCK(current_time_fine); //incremento cpu time del processo corrente
         corrente->p_time += current_time_fine - current_time_inizio;
-        if (lock_acquired)
-        {
-            RELEASE_LOCK(&Global_Lock); //here
-        }
+        RELEASE_LOCK(&Global_Lock); //here
+        
         scheduler();
     }
     
@@ -134,13 +117,7 @@ void WaitForClock(state_t* syscallState, pcb_PTR corrente) {
 }
 
 void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
-    int lock_aquired = 0;
-    if (!PassTest)
-    {
-        ACQUIRE_LOCK(&Global_Lock);
-        lock_aquired = 1;
-    }
-
+    ACQUIRE_LOCK(&Global_Lock);
     pcb_PTR corrente = Current_Process[cpuid];
     if(corrente->p_s.status & MSTATUS_MPP_MASK != MSTATUS_MPP_M)
     {   
@@ -150,38 +127,38 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
 
     switch(syscallState->reg_a0) //only in kernel mode (if in user mode -> program trap)
     {
-    case CREATEPROCESS: //Create Process (SYS1)
+    case -1: //Create Process (SYS1)
         
         break;
 
-    case TERMPROCESS: //Terminate Process (SYS2)
+    case -2: //Terminate Process (SYS2)
         
         break;
     
-    case PASSEREN: //Passeren (P)
-        Passeren(syscallState, corrente, lock_aquired);
+    case -3: //Passeren (P)
+        Passeren(syscallState, corrente);
         break;
 
-    case VERHOGEN: // Verhogen (V)
-        Verhogen(syscallState, corrente, lock_aquired);
+    case -4: // Verhogen (V)
+        Verhogen(syscallState, corrente);
         break;
 
-    case DOIO: //DoIO (NSYS5) *
+    case -5: //DoIO (NSYS5) *
         //ritorna
         break;
-    case GETTIME: //GetCPUTime (NSYS6)
+    case -6: //GetCPUTime (NSYS6)
         //ritorna p_supportStruct
         break;
     
-    case CLOCKWAIT: //WaitForClock (NSYS7)
+    case -7: //WaitForClock (NSYS7)
         WaitForClock(syscallState, corrente);
         break;
 
-    case GETSUPPORTPTR: //GetSupportData (NSYS8)
+    case -8: //GetSupportData (NSYS8)
         //ritorna
         break;
     
-    case GETPROCESSID: //GetProcessID (NSYS9)
+    case -9: //GetProcessID (NSYS9)
         //ritorna
         break;
     
@@ -195,7 +172,7 @@ void TLBHandler(){
     
 }
 void TRAPHandler(state_t* syscallState, unsigned int cpuid) {
-    if (Current_Process[cpuid]->p_supportStruct == NULL) //kill 🏫🔫
+    if (Current_Process[cpuid]->p_supportStruct == NULL) 
     {
         ACQUIRE_LOCK(&Global_Lock);
         //Process_Count reajusted
@@ -204,7 +181,7 @@ void TRAPHandler(state_t* syscallState, unsigned int cpuid) {
         //sitting on the Ready Queue (“ready”), 
         //blocked waiting for device (“blocked”), 
         //or blocked waiting for non-device (“blocked”).
-        //caso in cui il processo figlio ha 2 figli e in cui uno dei due figli ha 
+        //caso in cui il processo figlio ha 2 figli e in cui uno dei due figli ha
         RELEASE_LOCK(&Global_Lock);
     }
     
