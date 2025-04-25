@@ -1,15 +1,27 @@
 #include "./headers/initial.h"
 
+
+int Process_Count;
+struct list_head Ready_Queue;
+pcb_PTR Current_Process[NCPU]; // da inizializzare a NULL
+int SemaphoreDisk[8];
+int SemaphoreFlash[8];
+int SemaphoreNetwork[8];
+int SemaphorePrinter[8];
+int SemaphoreTerminalReceiver[8];
+int SemaphoreTerminalTransmitter[8];
+int SemaphorePseudo;
+unsigned volatile int Global_Lock;
+
 void exceptionHandler() {
     unsigned int cause = getCAUSE();
-    
+    unsigned int excode = cause & CAUSE_EXCCODE_MASK; // estraiamo eccezione tramite and con la maschera
     // Interrupt?     Exception code (excode)
     //     0          000101010101010101010101010101010
 
     if (CAUSE_IS_INT(cause)) {
-        InterruptHandler();
+        InterruptHandler(GET_EXCEPTION_STATE_PTR(getPRID()), excode);
     }else{
-        unsigned int excode = cause & CAUSE_EXCCODE_MASK;     // estraiamo eccezione tramite and con la maschera
         switch (excode) 
         {
             case 24 ... 28:  //For exception codes 24-28 (TLB exceptions), processing should be passed along to your Nucleus’s TLB exception handler
@@ -22,11 +34,22 @@ void exceptionHandler() {
                 SYSCALLHandler(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID());
                 break;
             default:   //For other exception codes 0-7, 9, 10, 12-23 (Program Traps), processing should be passed along to your Nucleus’s Program Trap exception handler
-                TRAPHandler(); 
+                TRAPHandler(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID()); 
                 break;
         }
     }
 }
+
+// From gcc/libgcc/memcpy.c
+void *memcpy(void *dest, const void *src, unsigned int len)
+{
+  char *d = dest;
+  const char *s = src;
+  while (len--)
+    *d++ = *s++;
+  return dest;
+}
+
 
 int main(){
  	Process_Count = 0;
@@ -43,8 +66,9 @@ int main(){
             passupvector->tlb_refill_stackPtr= KERNELSTACK;
             passupvector->exception_stackPtr = KERNELSTACK;
         } else {
-            passupvector->tlb_refill_stackPtr= 0x20020000 + (cpu_id * PAGESIZE);
+            passupvector->tlb_refill_stackPtr = (cpu_id * PAGESIZE) + (64 * PAGESIZE) + RAMSTART;
             passupvector->exception_stackPtr = 0x20020000 + (cpu_id * PAGESIZE);
+            //RAMSTART + (64 * PAGESIZE) + (cpu_id * PAGESIZE)
         }
         passupvector->exception_handler = (memaddr)exceptionHandler;
     }
@@ -59,17 +83,15 @@ int main(){
     initPcbs();
     Current_Process[0] = NULL; //inizializzo il puntatore al processo corrente a NULL
 
-    //Inizializzazione liste dei processi bloccapti per ogni semaforo
+    //Inizializzazione liste dei processi bloccanti per ogni semaforo
     for (int i = 0; i < 8; i++)
     {
         SemaphoreFlash[i] = 0;
         SemaphoreDisk[i] = 0;
         SemaphoreNetwork[i] = 0;
         SemaphorePrinter[i] = 0;
-    }
-    for (int i = 0; i < 16; i++)
-    {
-        SemaphoreTerminal[i] = 0;
+        SemaphoreTerminalReceiver[i] = 0;
+        SemaphoreTerminalTransmitter[i] = 0;
     }
     SemaphorePseudo = 0;
     LDIT(PSECOND); //imposta l'intervallo di tempo a 100ms
@@ -83,11 +105,10 @@ int main(){
     RAMTOP(first->p_s.reg_sp); // da 0x20001000 (Kernelstack) in su, ma lo stack cresce verso il basso
     first->p_s.pc_epc = (memaddr) test;
 
-    // Try this approach for IRT initialization
     for (int i = 0; i < IRT_NUM_ENTRY; i++) {
         memaddr irt_addr;
         if (i == 0) {
-            irt_addr = IRT_START; 
+            irt_addr = IRT_START;
         } else if (i == 1) {
             irt_addr = IRT_START + 0x20;  // Special jump for second entry
         } else {    
@@ -95,7 +116,7 @@ int main(){
         }
         *((memaddr *)irt_addr) = IRT_RP_BIT_ON | ((1 << NCPU) - 1);
     }
-    
+
 
     //per le NCPU-1:
     
@@ -104,17 +125,14 @@ int main(){
         state_t otherCPU; //creo uno stato per ogni processore (escluso CPU0)
         otherCPU.status = MSTATUS_MPP_M;  
         otherCPU.pc_epc = (memaddr)scheduler;
-        for (int j = 0; j < STATE_GPR_LEN; j++) {
-            otherCPU.gpr[j] = 0;
-        }
-        
         otherCPU.reg_sp = 0x20020000 + (cpu_id * PAGESIZE);
         otherCPU.cause = 0;
         otherCPU.mie = 0;
         otherCPU.entry_hi = 0;
         INITCPU(cpu_id, &otherCPU); //accendo la cpu con indirizzo cpu_id;
     }
-    *((memaddr *)TPR) = 0;
-    return 0; //non dorvebbe mai raggiungerlo
-    //includere la funzione test in qualche modo (all'inizio), (i .h faranno forse conflitto)
+    *((memaddr *)TPR) = 0; //deve essere settato per ogni singolo processore
+    scheduler();
+    
+    return 0; //non dovrebbe mai raggiungerlo, messo per sicurezza
 }

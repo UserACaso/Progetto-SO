@@ -19,10 +19,11 @@ extern int SemaphoreDisk[8];
 extern int SemaphoreFlash[8];
 extern int SemaphoreNetwork[8];
 extern int SemaphorePrinter[8];
-extern int SemaphoreTerminal[16];
+extern int SemaphoreTerminalReceiver[8];
+extern int SemaphoreTerminalTransmitter[8];
 extern int SemaphorePseudo;
-extern volatile int Global_Lock;
-
+extern unsigned volatile int Global_Lock;
+extern void *memcpy(void *dest, const void *src, unsigned int len);
 void exceptionHandler();
 
 #endif
