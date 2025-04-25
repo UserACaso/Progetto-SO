@@ -13,7 +13,7 @@ void PLTHandler(state_t* syscallState) {
     //Place the Current Process on the Ready Queue; transitioning the Current Process from the “running” state to the “ready” state.
     Current_Process[processore] = NULL;
     insertProcQ(&Ready_Queue, corrente);
-    
+
     RELEASE_LOCK(&Global_Lock);
     scheduler();
 }
@@ -42,47 +42,61 @@ void PseudoClockHandler(state_t* syscallState){
 }
 
 void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
-    devreg_t* devAddrBase = 0x10000054 + ((IntlineNo - 3) * 0x80) + (DevNo * 0x10);
-    unsigned int status, status_rc, status_tr;
+    devreg_t* devAddrBase = (devreg_t*)0x10000054 + ((IntlineNo - 3) * 0x80) + (DevNo * 0x10);
+    unsigned int status;
+    int* indirizzo;
     if(IntlineNo != 7)
     {
         status = devAddrBase->dtp.status;
         devAddrBase->dtp.command = ACK;
+        switch (IntlineNo)
+            {
+                case 3: //IL_DISK 
+                    indirizzo = &SemaphoreDisk[DevNo];
+                    break;
+                case 4: //IL_FLASH
+                    indirizzo = &SemaphoreFlash[DevNo];
+                    break;
+                case 5: //IL_ETHERNET
+                    indirizzo = &SemaphoreNetwork[DevNo];
+                    break;
+                case 6: //IL_PRINTER
+                    indirizzo = &SemaphorePrinter[DevNo];
+                    break;
+            }
+        pcb_PTR blockedProc = NULL;
+        if (*indirizzo == 0 && ((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB 
+            blockedProc->p_s.reg_a0 = status;
+            blockedProc->p_semAdd = NULL;
+            insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
+        }
     }
     else
-    {   
-        status_rc = devAddrBase->term.recv_status;
-        
-        status_tr = devAddrBase->term.transm_status;
-        devAddrBase->term.recv_command = ACK;
-    }
-    
-    int* indirizzo;
-    switch (IntlineNo)
     {
-        case 3: //IL_DISK 
-            indirizzo = &SemaphoreDisk[DevNo];
-            break;
-        case 4: //IL_FLASH
-            indirizzo = &SemaphoreFlash[DevNo];
-            break;
-        case 5: //IL_ETHERNET
-            indirizzo = &SemaphoreNetwork[DevNo];
-            break;
-        case 6: //IL_PRINTER
-            indirizzo = &SemaphorePrinter[DevNo];
-            break;
-        case 7: //IL_TERMINAL 
-            indirizzo = &SemaphoreTerminal[DevNo];//cambiare
-            break;
+        if(devAddrBase->term.transm_status != 0 && devAddrBase->term.transm_status != 1 && devAddrBase->term.transm_status != 3)
+        {
+            indirizzo = &SemaphoreTerminalTransmitter[DevNo];
+            status  = devAddrBase->term.transm_status;
+            pcb_PTR blockedProc = NULL;
+            if (*indirizzo == 0 && ((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB 
+                blockedProc->p_s.reg_a0 = status;
+                blockedProc->p_semAdd = NULL;
+                insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
+            }
+            devAddrBase->term.transm_command = ACK;
+        }
+        if(devAddrBase->term.recv_status != 0 && devAddrBase->term.recv_status != 1 && devAddrBase->term.recv_status != 3) {
+            indirizzo = &SemaphoreTerminalReceiver[DevNo];
+            status = devAddrBase->term.recv_status;
+            pcb_PTR blockedProc = NULL;
+            if (*indirizzo == 0 && ((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB 
+                blockedProc->p_s.reg_a0 = status;
+                blockedProc->p_semAdd = NULL;
+                insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
+            }
+            devAddrBase->term.recv_command = ACK;
+        }
     }
-
-    pcb_PTR blockedProc = NULL;
-    if (*indirizzo == 0 && ((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB 
-        blockedProc->p_s.reg_a0 = status;
-        insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
-    }
-    
     RELEASE_LOCK(&Global_Lock);
     if (Current_Process[getPRID()] == NULL)
     {
@@ -90,12 +104,12 @@ void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
     }else {//carica lo stato del processore prima delll'interrupt
         LDST(syscallState);
     }
-        
+
 }
 
 int DevNOGet(unsigned int Linea) {
     unsigned int temp = 0;
-    for(int i = 0; i < 7; i++){ //ritorna il device della linea
+    for(int i = 0; i < 8; i++){ //ritorna il device della linea
         if(*((memaddr *)(0x10000040) + (Linea-3)*0x4 ) & (DEV0ON << i)){
             return i;
         }
