@@ -65,7 +65,7 @@ void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
                     break;
             }
         pcb_PTR blockedProc = NULL;
-        if (*indirizzo == 0 && ((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB 
+        if (((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB 
             blockedProc->p_s.reg_a0 = status;
             blockedProc->p_semAdd = NULL;
             insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
@@ -78,7 +78,7 @@ void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
             indirizzo = &SemaphoreTerminalTransmitter[DevNo];
             status  = devAddrBase->term.transm_status;
             pcb_PTR blockedProc = NULL;
-            if (*indirizzo == 0 && ((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB 
+            if (((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB 
                 blockedProc->p_s.reg_a0 = status;
                 blockedProc->p_semAdd = NULL;
                 insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
@@ -89,7 +89,7 @@ void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
             indirizzo = &SemaphoreTerminalReceiver[DevNo];
             status = devAddrBase->term.recv_status;
             pcb_PTR blockedProc = NULL;
-            if (*indirizzo == 0 && ((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB 
+            if (((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB 
                 blockedProc->p_s.reg_a0 = status;
                 blockedProc->p_semAdd = NULL;
                 insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
@@ -97,11 +97,13 @@ void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
             devAddrBase->term.recv_command = ACK;
         }
     }
-    RELEASE_LOCK(&Global_Lock);
+    
     if (Current_Process[getPRID()] == NULL)
     {
+        RELEASE_LOCK(&Global_Lock);
         scheduler();
     }else {//carica lo stato del processore prima delll'interrupt
+        RELEASE_LOCK(&Global_Lock);
         LDST(syscallState);
     }
 

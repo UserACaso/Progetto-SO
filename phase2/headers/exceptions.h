@@ -10,4 +10,7 @@ void Passeren(state_t* syscallState, pcb_PTR corrente);
 void Verhogen(state_t* syscallState, pcb_PTR corrente);
 void WaitForClock(state_t* syscallState, pcb_PTR corrente);
 void TRAPHandler(state_t* syscallState, unsigned int cpuid);
+void DoIo(state_t* syscallState, pcb_PTR corrente);
+
+
 #endif

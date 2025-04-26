@@ -1,4 +1,5 @@
 #include "./headers/exceptions.h"
+#define TERM0ADDR 0x10000254
 
 /*
     Quando avviene un'eccezione, all'interno del BIOS Data Page vengono salvate le informazioni 
@@ -23,7 +24,7 @@
 void Passeren(state_t* syscallState, pcb_PTR corrente){
     cpu_t current_time_inizio, current_time_fine;
     STCK(current_time_inizio);
-    memaddr* semaddr = (memaddr *)syscallState->reg_a1; //semaddr contiene l'indirizzo del semaforo   
+    memaddr* semaddr = (memaddr *)syscallState->reg_a1; //semaddr contiene l'indirizzo del semaforo
     pcb_PTR blockedProc = NULL;
     if (*semaddr == 1 && ((blockedProc = removeBlocked((int *)semaddr)) != NULL)){ //controlla se nella coda del semaforo se esiste una V: nel caso la sblocca e si sblocca anche questo processo
         syscallState->pc_epc += 4;
@@ -116,6 +117,103 @@ void WaitForClock(state_t* syscallState, pcb_PTR corrente) {
     
 }
 
+void DoIo(state_t* syscallState, pcb_PTR corrente) {
+    cpu_t current_time_inizio, current_time_fine;
+    STCK(current_time_inizio);
+    int commandAddr = syscallState->reg_a1;
+    int commandValue = syscallState->reg_a2;
+    unsigned int base = commandAddr;
+    int* semaddr = NULL;
+    unsigned int pos = 0;
+    
+    if (commandAddr >= TERM0ADDR)
+    {
+        pos = commandAddr & 0xF;
+        switch (pos)
+        {
+            case 0xC:
+                base -= 0xC; 
+                break;
+            case 0x4:
+                base -= 0x4;
+                break;
+        }   
+    } else {
+        base -= 0x4;
+    }
+
+    //diff = [commandAddr - 0x1000.0054] = numeri di bit corrispondenti fino all'indirizzo che ci viene dato 
+    //per calcolare la linea si utilizza la divisione intera diff / 128 + 3 (partiamo dalla linea 3).
+    //per calcolare il device il resto lo si divide per 16 sempre utilizzando la divisione intera
+    unsigned int diff = base - 0x10000054;
+    int linea =  diff/0x80 + 3; //abbiamo convertito il numer0 128 in esadecimale
+    int device = (diff%(0x80))/(0x10); //abbiamo convertito i numeri in esadecimale
+    
+    devreg_t* devAddrBase = 0x10000054 + ((linea - 3) * 0x80) + (device * 0x10);
+    
+    switch (linea)
+    {
+        case 3: //IL_DISK 
+            semaddr = &SemaphoreDisk[device];
+            break;
+        case 4: //IL_FLASH
+            semaddr = &SemaphoreFlash[device];
+            break;
+        case 5: //IL_ETHERNET
+            semaddr = &SemaphoreNetwork[device];
+            break;
+        case 6: //IL_PRINTER 
+            semaddr = &SemaphorePrinter[device];
+            break;
+        case 7:
+            if(pos == 0xC){
+                semaddr = &SemaphoreTerminalTransmitter[device];
+            } else{
+                semaddr = &SemaphoreTerminalReceiver[device];
+            } 
+            break;
+        default: //per sicurezza, se mai accadesse un errore inesistente
+            PANIC();
+    }
+
+//Verificare anche nel caso 2 processi cercano di fermarsi sullo stesso device 
+    corrente->p_s = *syscallState;
+    corrente->p_semAdd = semaddr;
+    int temp = insertBlocked((int*)semaddr, corrente);
+    if (temp == 1) //se non è possibile creare nuovi processi
+        PANIC();
+
+    syscallState->pc_epc += 4;
+
+    if(linea == 7)
+    {
+        if(pos == 0xC)
+        {
+            STCK(current_time_fine); 
+            corrente->p_time += current_time_fine - current_time_inizio;
+            devAddrBase->term.transm_command = commandValue;   
+            RELEASE_LOCK(&Global_Lock);     
+            scheduler();
+        }
+        else
+        {
+            STCK(current_time_fine); 
+            corrente->p_time += current_time_fine - current_time_inizio;
+            devAddrBase->term.recv_command = commandValue;   
+            RELEASE_LOCK(&Global_Lock);     
+            scheduler();
+        }
+    }
+    else
+    {
+        STCK(current_time_fine); 
+        corrente->p_time += current_time_fine - current_time_inizio;
+        devAddrBase->dtp.command = commandValue;
+        RELEASE_LOCK(&Global_Lock);     
+        scheduler();
+    }
+}
+
 void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
     ACQUIRE_LOCK(&Global_Lock);
     pcb_PTR corrente = Current_Process[cpuid];
@@ -144,7 +242,7 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
         break;
 
     case -5: //DoIO (NSYS5) *
-        //ritorna
+        DoIo(syscallState, corrente);
         break;
     case -6: //GetCPUTime (NSYS6)
         //ritorna p_supportStruct
@@ -176,7 +274,7 @@ void TRAPHandler(state_t* syscallState, unsigned int cpuid) {
     {
         ACQUIRE_LOCK(&Global_Lock);
         //Process_Count reajusted
-            
+        
         //all PCB A PCB is either the Current Process (“running”), 
         //sitting on the Ready Queue (“ready”), 
         //blocked waiting for device (“blocked”), 
