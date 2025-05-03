@@ -218,15 +218,6 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
     }
 }
 
-void CreateProcess(state_t* syscallState, pcb_PTR corrente) {
-}
-
-void syscallGetProcessID(state_t *exc_state) {
-}
-
-void syscall_get_cpu_time(int cpu_id, state_t *excState) {
-}
-
 void Terminator(pcb_PTR p) //Pass Up or Die
 {
     //orfanare il padre dal processo, se esiste un processo padre
@@ -253,11 +244,6 @@ void Terminator(pcb_PTR p) //Pass Up or Die
     freePcb(p);
 }
 
-void syscall_terminate_process(state_t* syscallState, pcb_PTR corrente) {
-}
-
-void syscall_get_support_data(state_t* exc_state) {
-}
 
 void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
     ACQUIRE_LOCK(&Global_Lock);
@@ -272,11 +258,9 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
     switch(syscallState->reg_a0) //only in kernel mode (if in user mode -> program trap)
     {
     case -1: //Create Process (SYS1)
-        CreateProcess(syscallState, corrente);
         break;
 
     case -2: //Terminate Process (SYS2)
-        syscall_terminate_process(syscallState, corrente);
         break;
     
     case -3: //Passeren (P)
@@ -292,7 +276,6 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
         DoIo(syscallState, corrente);
         break;
     case -6: //GetCPUTime (NSYS6)
-        syscall_get_cpu_time(cpuid, syscallState);
         break;
     
     case -7: //WaitForClock (NSYS7)
@@ -300,11 +283,9 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
         break;
 
     case -8: //GetSupportData (NSYS8)
-        syscall_get_support_data(syscallState);
         break;
     
     case -9: //GetProcessID (NSYS9)
-        syscallGetProcessID(syscallState);
         break;
         
     default:

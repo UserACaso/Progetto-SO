@@ -1,5 +1,5 @@
 #include "./headers/interrupts.h"
-
+//#include "klog.c"
 
 //LDST: RIABILITA LE INTERRUPT.
 
@@ -7,13 +7,16 @@ void PLTHandler(state_t* syscallState) {
     //Acknowledge the PLT interrupt by loading the timer with a new value using setTIMER.
     setTIMER(TIMESLICE);
     int processore = getPRID();
-    //Copy the processor state of the current CPU at the time of the exception into the Current Process’s PCB (p_s) of the current CPU.
-    pcb_PTR corrente = Current_Process[processore];
-    corrente->p_s = *syscallState;
-    //Place the Current Process on the Ready Queue; transitioning the Current Process from the “running” state to the “ready” state.
-    Current_Process[processore] = NULL;
-    insertProcQ(&Ready_Queue, corrente);
-
+    if (Current_Process[processore] != NULL)
+    {
+        //Copy the processor state of the current CPU at the time of the exception into the Current Process’s PCB (p_s) of the current CPU.
+        pcb_PTR corrente = Current_Process[processore];
+        corrente->p_s = *syscallState;
+        //Place the Current Process on the Ready Queue; transitioning the Current Process from the “running” state to the “ready” state.
+        Current_Process[processore] = NULL;
+        insertProcQ(&Ready_Queue, corrente); 
+    }
+    
     RELEASE_LOCK(&Global_Lock);
     scheduler();
 }
@@ -42,7 +45,7 @@ void PseudoClockHandler(state_t* syscallState){
 }
 
 void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
-    devreg_t* devAddrBase = (devreg_t*)0x10000054 + ((IntlineNo - 3) * 0x80) + (DevNo * 0x10);
+    devreg_t* devAddrBase = (devreg_t*)(0x10000054 + ((IntlineNo - 3) * 0x80) + (DevNo * 0x10));
     unsigned int status;
     int* indirizzo;
     if(IntlineNo != 7)
@@ -75,6 +78,7 @@ void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
     {
         if(devAddrBase->term.transm_status != 0 && devAddrBase->term.transm_status != 1 && devAddrBase->term.transm_status != 3)
         {
+            
             indirizzo = &SemaphoreTerminalTransmitter[DevNo];
             status  = devAddrBase->term.transm_status;
             pcb_PTR blockedProc = NULL;
@@ -100,44 +104,60 @@ void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
     
     if (Current_Process[getPRID()] == NULL)
     {
+        //klog_print("Current_Process = NULL");
         RELEASE_LOCK(&Global_Lock);
         scheduler();
     }else {//carica lo stato del processore prima delll'interrupt
+        //klog_print("Current_Process != NULL");
         RELEASE_LOCK(&Global_Lock);
         LDST(syscallState);
     }
 
 }
 
-int DevNOGet(unsigned int Linea) {
-    unsigned int temp = 0;
-    for(int i = 0; i < 8; i++){ //ritorna il device della linea
-        if(*((memaddr *)(0x10000040) + (Linea-3)*0x4 ) & (DEV0ON << i)){
-            return i;
-        }
-    }
-    PANIC();
-}
 //NOTA: "syscallState" è lo stato del processore un attimo prima dell'arrivo dell'interrupt
 void InterruptHandler(state_t* syscallState, unsigned int excode){
     ACQUIRE_LOCK(&Global_Lock);
+    // klog_print(" ");
+    // klog_print_dec(getPRID());
     unsigned int cause = getCAUSE();
-    for (int i = 0; i < 8; ++i) {
-        unsigned int temp = 0;
-        if ((temp = CAUSE_IP_GET(cause, i))) {
-            switch (i) {
-                case 1:
-                    PLTHandler(syscallState);
-                    break;
-                case 2:
-                    PseudoClockHandler(syscallState);
-                    break;
-                default:
-                    DeviceHandler(i, DevNOGet(i), syscallState);
-                    break;
+    switch (excode)
+    {
+        case IL_CPUTIMER:
+                PLTHandler(syscallState);
+                break;
+        case IL_TIMER:
+                PseudoClockHandler(syscallState);
+                break;
+        default:
+            for (int i = 0; i < 5; ++i) {
+                memaddr* temp = 0x10000040 + (i*0x4); 
+                for(int dev = 0; dev < 8; dev++)
+                {
+                    if((*temp) & (1<<dev))
+                    {
+                        switch (i+3)
+                        {
+                            case 3:
+                                DeviceHandler(3, dev, syscallState);
+                                break;
+                            case 4:
+                                DeviceHandler(4, dev, syscallState);
+                                break;
+                            case 5:
+                                DeviceHandler(5, dev, syscallState);
+                                break;
+                            case 6:
+                                DeviceHandler(6, dev, syscallState);
+                                break;
+                            case 7:
+                                DeviceHandler(7, dev, syscallState);
+                                break;
+                        }
+                    }
+                }
             }
             break;
-        }
     }
 
     //controllo che vi siano degli interrupt a priorità più alta (partendo dal basso)

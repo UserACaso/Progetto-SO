@@ -3,7 +3,7 @@
 
 #include "initial.h"
 
-void TLBHandler();
+void TLBHandler(state_t* syscallState, unsigned int cpuid);
 
 void SYSCALLHandler(state_t* syscallState, unsigned int cpuid);
 void Passeren(state_t* syscallState, pcb_PTR corrente);
@@ -11,6 +11,6 @@ void Verhogen(state_t* syscallState, pcb_PTR corrente);
 void WaitForClock(state_t* syscallState, pcb_PTR corrente);
 void TRAPHandler(state_t* syscallState, unsigned int cpuid);
 void DoIo(state_t* syscallState, pcb_PTR corrente);
-
+void Terminator(pcb_PTR p);
 
 #endif

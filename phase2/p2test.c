@@ -18,6 +18,7 @@
 #include "../headers/const.h"
 #include "../headers/types.h"
 #include "./headers/initial.h"
+//#include "klog.c"
 #include <uriscv/liburiscv.h>
 
 typedef unsigned int devregtr;
@@ -326,12 +327,13 @@ void p2() {
     SYSCALL(PASSEREN, (int)&sem_startp2, 0, 0); /* P(sem_startp2)   */
 
     print("p2 starts\n");
-
+    
     int pid = SYSCALL(GETPROCESSID, 0, 0, 0);
     if (pid != p2pid) {
         print("Inconsistent process id for p2!\n");
         PANIC();
     }
+    
 
     /* initialize all semaphores in the s[] array */
     for (i = 0; i <= MAXSEM; i++) {
@@ -370,9 +372,10 @@ void p2() {
         print("p2 blew it!\n");
     }
 
+    klog_print(" past If ");
     p1p2synch = 1; /* p1 will check this */
 
-    SYSCALL(PASSEREN, (int)&sem_endp2, 0, 0); /* P(sem_endp2)    unblocking P ! */
+    SYSCALL(PASSEREN, (int)&sem_endp2, 0, 0); /* P(sem_endp2)     unblocking P ! */
 
     SYSCALL(TERMPROCESS, 0, 0, 0); /* terminate p2 */
 
@@ -487,6 +490,7 @@ void p5gen()
     // store access fault
     case BUSERROR:
         print("Bus Error (as expected): Access non-existent memory\n");
+        klog_print("Bus Error");
         pFiveSupport.sup_exceptState[GENERALEXCEPT].pc_epc = (memaddr)p5a; /* Continue with p5a() */
         break;
 

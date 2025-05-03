@@ -20,12 +20,13 @@ void exceptionHandler() {
     //     0          000101010101010101010101010101010
 
     if (CAUSE_IS_INT(cause)) {
+        
         InterruptHandler(GET_EXCEPTION_STATE_PTR(getPRID()), excode);
     }else{
         switch (excode) 
         {
             case 24 ... 28:  //For exception codes 24-28 (TLB exceptions), processing should be passed along to your Nucleus’s TLB exception handler
-                TLBHandler();
+                TLBHandler(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID());
                 break;
             case 8:   //For exception codes 8 and 11, processing should be passed along to your Nucleus’s SYSCALL exception handler
                 SYSCALLHandler(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID());
