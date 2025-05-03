@@ -1,5 +1,4 @@
 #include "./headers/interrupts.h"
-//#include "klog.c"
 
 //LDST: RIABILITA LE INTERRUPT.
 
@@ -136,24 +135,7 @@ void InterruptHandler(state_t* syscallState, unsigned int excode){
                 {
                     if((*temp) & (1<<dev))
                     {
-                        switch (i+3)
-                        {
-                            case 3:
-                                DeviceHandler(3, dev, syscallState);
-                                break;
-                            case 4:
-                                DeviceHandler(4, dev, syscallState);
-                                break;
-                            case 5:
-                                DeviceHandler(5, dev, syscallState);
-                                break;
-                            case 6:
-                                DeviceHandler(6, dev, syscallState);
-                                break;
-                            case 7:
-                                DeviceHandler(7, dev, syscallState);
-                                break;
-                        }
+                        DeviceHandler(i+3, dev, syscallState);
                     }
                 }
             }

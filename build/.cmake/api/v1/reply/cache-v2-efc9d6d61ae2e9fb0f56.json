@@ -195,7 +195,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/user/Desktop/Progetto-SO-Tester/build"
+			"value" : "/home/user/Desktop/Progetto-SO/build"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -559,7 +559,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/user/Desktop/Progetto-SO-Tester/build/CMakeFiles/pkgRedirects"
+			"value" : "/home/user/Desktop/Progetto-SO/build/CMakeFiles/pkgRedirects"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -619,7 +619,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/user/Desktop/Progetto-SO-Tester"
+			"value" : "/home/user/Desktop/Progetto-SO"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -1155,7 +1155,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/user/Desktop/Progetto-SO-Tester/build"
+			"value" : "/home/user/Desktop/Progetto-SO/build"
 		},
 		{
 			"name" : "MultiPandOS_IS_TOP_LEVEL",
@@ -1179,7 +1179,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/user/Desktop/Progetto-SO-Tester"
+			"value" : "/home/user/Desktop/Progetto-SO"
 		},
 		{
 			"name" : "_CMAKE_LINKER_PUSHPOP_STATE_SUPPORTED",
