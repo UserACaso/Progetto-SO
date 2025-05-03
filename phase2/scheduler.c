@@ -1,17 +1,17 @@
 #include "./headers/scheduler.h"
-#include "klog.c"
+
 
 void scheduler(){
     while (1){    
         ACQUIRE_LOCK(&Global_Lock);
-        klog_print("Scheduler started");
+        //klog_print("Scheduler started");
         if(emptyProcQ(&Ready_Queue)){ //se ready queue è vuota
             if(Process_Count == 0){ //se non ci sono processi
-                klog_print("Process count 0; halting");
+                //klog_print("Process count 0; halting");
                 RELEASE_LOCK(&Global_Lock);
                 HALT(); //invoco halt
             } else {
-                klog_print("Process count >0; no ready");
+                //klog_print("Process count >0; no ready");
                 RELEASE_LOCK(&Global_Lock);
                 setMIE(MIE_ALL & ~MIE_MTIE_MASK); //disattivo plt interrupt
                 unsigned int status = getSTATUS();
@@ -21,7 +21,7 @@ void scheduler(){
                 WAIT(); //metto in attesa
             }
         } else { //almeno un processo è pronto
-            klog_print("Ready queue not empty");
+            //klog_print("Ready queue not empty");
             pcb_t *nextP = removeProcQ(&Ready_Queue); //rimuovo il primo da ready queue
             Current_Process[getPRID()] = nextP ; //getPRID mi dà id del processore. metto, quindi, il pointer alla pcb nel current process della cpu attuale
             RELEASE_LOCK(&Global_Lock);
@@ -31,22 +31,3 @@ void scheduler(){
         };
     }
 }
-
-
-
-
-/* void bp(){
-
-}
-void scheduler(){
-    ACQUIRE_LOCK(&Global_Lock);
-    //klog_print("Scheduler started");
-    if
-    while (1)
-    {
-        ACQUIRE_LOCK(&Global_Lock);
-        klog_print("bella ciao");
-        klog_print_dec(getPRID());
-        RELEASE_LOCK(&Global_Lock);
-    }
-}*/
