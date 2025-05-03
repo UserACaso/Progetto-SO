@@ -1,6 +1,9 @@
 #include "./headers/exceptions.h"
+//#include "klog.c"
 #define TERM0ADDR 0x10000254
 
+static int next_pid = 1;
+int new_pid() { return next_pid++; }
 /*
     Quando avviene un'eccezione, all'interno del BIOS Data Page vengono salvate le informazioni 
     correnti degli stati di TUTTI i processori.
@@ -59,6 +62,7 @@ void Passeren(state_t* syscallState, pcb_PTR corrente){
     
 }
 
+
 void Verhogen(state_t* syscallState, pcb_PTR corrente){
     cpu_t current_time_inizio, current_time_fine;
     STCK(current_time_inizio);
@@ -87,10 +91,12 @@ void Verhogen(state_t* syscallState, pcb_PTR corrente){
         { /* gestione errore del semaforo */
             PANIC();
         }
+
+
         
         STCK(current_time_fine); //incremento cpu time del processo corrente
         corrente->p_time += current_time_fine - current_time_inizio;
-        RELEASE_LOCK(&Global_Lock); //here
+        RELEASE_LOCK(&Global_Lock); 
         
         scheduler();
     }
@@ -114,7 +120,6 @@ void WaitForClock(state_t* syscallState, pcb_PTR corrente) {
     corrente->p_time += current_time_fine - current_time_inizio;
     RELEASE_LOCK(&Global_Lock); 
     scheduler();
-    
 }
 
 void DoIo(state_t* syscallState, pcb_PTR corrente) {
@@ -124,19 +129,18 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
     int commandValue = syscallState->reg_a2;
     unsigned int base = commandAddr;
     int* semaddr = NULL;
-    unsigned int pos = 0;
+    unsigned int pos = (commandAddr - TERM0ADDR)%0x10;
     
     if (commandAddr >= TERM0ADDR)
     {
-        pos = commandAddr & 0xF;
         switch (pos)
         {
-            case 0xC:
-                base -= 0xC; 
-                break;
-            case 0x4:
-                base -= 0x4;
-                break;
+        case 0xC:
+            base -= 0xC;
+            break;
+        case 0x4:
+            base -= 0x4;
+            break;
         }   
     } else {
         base -= 0x4;
@@ -148,9 +152,9 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
     unsigned int diff = base - 0x10000054;
     int linea =  diff/0x80 + 3; //abbiamo convertito il numer0 128 in esadecimale
     int device = (diff%(0x80))/(0x10); //abbiamo convertito i numeri in esadecimale
-    
-    devreg_t* devAddrBase = 0x10000054 + ((linea - 3) * 0x80) + (device * 0x10);
-    
+    //devreg_t* devAddrBase = 0x10000054 + ((linea - 3) * 0x80) + (device * 0x10);
+    devreg_t* devAddrBase = (devreg_t*)(0x10000054 + ((linea - 3) * 0x80) + (device * 0x10));
+    //linea 3 + 4
     switch (linea)
     {
         case 3: //IL_DISK 
@@ -177,13 +181,13 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
     }
 
 //Verificare anche nel caso 2 processi cercano di fermarsi sullo stesso device 
+    syscallState->pc_epc += 4;
     corrente->p_s = *syscallState;
     corrente->p_semAdd = semaddr;
+
     int temp = insertBlocked((int*)semaddr, corrente);
     if (temp == 1) //se non è possibile creare nuovi processi
         PANIC();
-
-    syscallState->pc_epc += 4;
 
     if(linea == 7)
     {
@@ -214,11 +218,53 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
     }
 }
 
+void CreateProcess(state_t* syscallState, pcb_PTR corrente) {
+}
+
+void syscallGetProcessID(state_t *exc_state) {
+}
+
+void syscall_get_cpu_time(int cpu_id, state_t *excState) {
+}
+
+void Terminator(pcb_PTR p) //Pass Up or Die
+{
+    //orfanare il padre dal processo, se esiste un processo padre
+    if(p->p_parent != NULL) {
+        outChild(p);
+    }
+
+    for (int i = 0; i < NCPU; i++)
+    {
+        if(Current_Process[i] == p)
+        {
+            Current_Process[i] = NULL;
+        }
+    }
+
+    while (!emptyChild(p)) //lista non vuota, ossia il processo "p" ha dei figli
+    {
+        pcb_PTR figlio = removeChild(p); //rimuove solo il primo figlio
+        Terminator(figlio);
+    }
+
+    Process_Count--;
+    outBlocked(p);
+    freePcb(p);
+}
+
+void syscall_terminate_process(state_t* syscallState, pcb_PTR corrente) {
+}
+
+void syscall_get_support_data(state_t* exc_state) {
+}
+
 void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
     ACQUIRE_LOCK(&Global_Lock);
     pcb_PTR corrente = Current_Process[cpuid];
-    if(corrente->p_s.status & MSTATUS_MPP_MASK != MSTATUS_MPP_M)
+    if((corrente->p_s.status & MSTATUS_MPP_MASK) != MSTATUS_MPP_M)
     {   
+        RELEASE_LOCK(&Global_Lock);
         TRAPHandler(syscallState, cpuid);    
         return;
     }
@@ -226,11 +272,11 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
     switch(syscallState->reg_a0) //only in kernel mode (if in user mode -> program trap)
     {
     case -1: //Create Process (SYS1)
-        
+        CreateProcess(syscallState, corrente);
         break;
 
     case -2: //Terminate Process (SYS2)
-        
+        syscall_terminate_process(syscallState, corrente);
         break;
     
     case -3: //Passeren (P)
@@ -241,11 +287,12 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
         Verhogen(syscallState, corrente);
         break;
 
-    case -5: //DoIO (NSYS5) *
+    case -5: //DoIO (NSYS5)
+        Current_Process[cpuid] = NULL;
         DoIo(syscallState, corrente);
         break;
     case -6: //GetCPUTime (NSYS6)
-        //ritorna p_supportStruct
+        syscall_get_cpu_time(cpuid, syscallState);
         break;
     
     case -7: //WaitForClock (NSYS7)
@@ -253,26 +300,28 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
         break;
 
     case -8: //GetSupportData (NSYS8)
-        //ritorna
+        syscall_get_support_data(syscallState);
         break;
     
     case -9: //GetProcessID (NSYS9)
-        //ritorna
+        syscallGetProcessID(syscallState);
         break;
-    
-    default: // Program Trap exception
+        
+    default:
+        RELEASE_LOCK(&Global_Lock);
         TRAPHandler(syscallState, cpuid);
-        break;
     }
 }
 
-void TLBHandler(){
-    
-}
-void TRAPHandler(state_t* syscallState, unsigned int cpuid) {
+void TLBHandler(state_t* syscallState, unsigned int cpuid){
+    ACQUIRE_LOCK(&Global_Lock);
+    pcb_PTR corrente = Current_Process[cpuid];
     if (Current_Process[cpuid]->p_supportStruct == NULL) 
     {
-        ACQUIRE_LOCK(&Global_Lock);
+        //orfanare il padre dal processo, se esiste un processo padre
+        Terminator(corrente);   
+        RELEASE_LOCK(&Global_Lock);
+        scheduler();
         //Process_Count reajusted
         
         //all PCB A PCB is either the Current Process (“running”), 
@@ -280,7 +329,38 @@ void TRAPHandler(state_t* syscallState, unsigned int cpuid) {
         //blocked waiting for device (“blocked”), 
         //or blocked waiting for non-device (“blocked”).
         //caso in cui il processo figlio ha 2 figli e in cui uno dei due figli ha
+        //RELEASE_LOCK(&Global_Lock);
+    }
+    else //if(corrente->p_supportStruct != NULL) //passed up
+    {
+        corrente->p_supportStruct->sup_exceptState[PGFAULTEXCEPT] = *syscallState;
+        context_t temp = corrente->p_supportStruct->sup_exceptContext[PGFAULTEXCEPT];
         RELEASE_LOCK(&Global_Lock);
+        LDCXT(temp.stackPtr, temp.status, temp.pc);
+    }
+}
+
+void TRAPHandler(state_t* syscallState, unsigned int cpuid) {
+    ACQUIRE_LOCK(&Global_Lock);
+    pcb_PTR corrente = Current_Process[cpuid];
+    if (Current_Process[cpuid]->p_supportStruct == NULL) 
+    { 
+        Terminator(corrente);   
+        RELEASE_LOCK(&Global_Lock);
+        scheduler();
+        //Process_Count reajusted
+        //ricorsione!
+        //all PCB A PCB is either the Current Process (“running”), 
+        //sitting on the Ready Queue (“ready”), 
+        //blocked waiting for device (“blocked”), 
+        //or blocked waiting for non-device (“blocked”).
+    }
+    else //passed up
+    {
+        corrente->p_supportStruct->sup_exceptState[GENERALEXCEPT] = *syscallState;
+        context_t temp = corrente->p_supportStruct->sup_exceptContext[GENERALEXCEPT];
+        RELEASE_LOCK(&Global_Lock);
+        LDCXT(temp.stackPtr, temp.status, temp.pc);
     }
     
 }
