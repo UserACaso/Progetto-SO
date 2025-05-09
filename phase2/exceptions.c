@@ -21,11 +21,12 @@
                     bisogna segnalare all'utente che non è possibile bloccare il processo (PANIC()).
 */
 
+
 void Passeren(state_t* syscallState, pcb_PTR corrente){
     //Inizializzazione variabili inizio e fine tempo per syscall 
     cpu_t current_time_inizio, current_time_fine; 
     STCK(current_time_inizio);
-    
+
     memaddr* semaddr = (memaddr *)syscallState->reg_a1; //semaddr contiene l'indirizzo del semaforo
     pcb_PTR blockedProc = NULL;
 
@@ -57,7 +58,7 @@ void Passeren(state_t* syscallState, pcb_PTR corrente){
         //incremento cpu time del processo corrente
         STCK(current_time_fine); 
         corrente->p_time += current_time_fine - current_time_inizio;
-        
+        Current_Process[getPRID()] = NULL;
         RELEASE_LOCK(&Global_Lock); //rilascio la variabile globale
         scheduler(); //richiamo allo scheduler
 
@@ -102,7 +103,7 @@ void Verhogen(state_t* syscallState, pcb_PTR corrente){
         //incremento cpu time del processo corrente
         STCK(current_time_fine);
         corrente->p_time += current_time_fine - current_time_inizio;
-
+        Current_Process[getPRID()] = NULL;
         RELEASE_LOCK(&Global_Lock); //rilascio la variabile globale
         scheduler(); //richiamo allo scheduler
     }
@@ -124,6 +125,7 @@ void WaitForClock(state_t* syscallState, pcb_PTR corrente) {
     
     STCK(current_time_fine);
     corrente->p_time += current_time_fine - current_time_inizio; //incremento cpu time del processo corrente
+    Current_Process[getPRID()] = NULL;
     RELEASE_LOCK(&Global_Lock); 
     scheduler();
 }
@@ -201,7 +203,8 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
         {
             STCK(current_time_fine); 
             corrente->p_time += current_time_fine - current_time_inizio;
-            devAddrBase->term.transm_command = commandValue;   
+            devAddrBase->term.transm_command = commandValue; 
+            Current_Process[getPRID()] = NULL;  
             RELEASE_LOCK(&Global_Lock);     
             scheduler();
         }
@@ -210,6 +213,7 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
             STCK(current_time_fine); 
             corrente->p_time += current_time_fine - current_time_inizio;
             devAddrBase->term.recv_command = commandValue;   
+            Current_Process[getPRID()] = NULL;  
             RELEASE_LOCK(&Global_Lock);     
             scheduler();
         }
@@ -219,6 +223,7 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
         STCK(current_time_fine); 
         corrente->p_time += current_time_fine - current_time_inizio;
         devAddrBase->dtp.command = commandValue;
+        Current_Process[getPRID()] = NULL;  
         RELEASE_LOCK(&Global_Lock);     
         scheduler();
     }
@@ -286,7 +291,6 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
         break;
 
     case -5: //DoIO (NSYS5)
-        Current_Process[cpuid] = NULL;
         DoIo(syscallState, corrente);
         break;
     case -6: //GetCPUTime (NSYS6)

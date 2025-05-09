@@ -140,5 +140,5 @@ int main(){
     }
     *((memaddr *)TPR) = 0; //deve essere settato per ogni singolo processore
     scheduler();
-
+    klog_print("rompo");
 }

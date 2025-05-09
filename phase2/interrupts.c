@@ -22,7 +22,7 @@ void PLTHandler(state_t* syscallState) {
 
 void PseudoClockHandler(state_t* syscallState){
     LDIT(PSECOND);
-    
+    klog_print("pseudo");
     int* indirizzo = &SemaphorePseudo; 
     pcb_PTR blockedProc = NULL;
     while (1)
@@ -33,11 +33,14 @@ void PseudoClockHandler(state_t* syscallState){
             break;
         }
     }
-    RELEASE_LOCK(&Global_Lock);
+    
     if (Current_Process[getPRID()] == NULL)
     {
+        klog_print("soono qui");
+        RELEASE_LOCK(&Global_Lock);
         scheduler();
     }else {//carica lo stato del processore prima delll'interrupt
+        RELEASE_LOCK(&Global_Lock);
         LDST(syscallState);
     }
     

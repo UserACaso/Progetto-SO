@@ -2,7 +2,7 @@
 
 
 void scheduler(){
-    while (1){    
+    //while (1){    
         ACQUIRE_LOCK(&Global_Lock);
         if(emptyProcQ(&Ready_Queue)){ //se ready queue è vuota
             if(Process_Count == 0){ //se non ci sono processi
@@ -25,5 +25,5 @@ void scheduler(){
             *((memaddr *) TPR) = 0; //metto cpu priorità alta
             LDST(&(nextP->p_s)); //faccio load processor state sul processor state della pcb in Current Process (p_s) della cpu attuale
         }
-    }
+   // }
 }
