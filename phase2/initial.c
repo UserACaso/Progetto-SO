@@ -121,7 +121,7 @@ int main(){
         else 
             irt_addr = IRT_START + 0x20 + ((i-1) * 0x4); /* Altre Interrupt line */
 
-        *((memaddr *)irt_addr) = IRT_RP_BIT_ON | ((1 << NCPU) - 1); /* Accensione bit RP */
+        *((memaddr *)irt_addr) = IRT_RP_BIT_ON | ((1 << NCPU) - 1); /* Accensione bit RP */ //Riguardare questo punto con la documentazione 
     }   
 
 
