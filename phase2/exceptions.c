@@ -54,8 +54,6 @@ void Terminator(pcb_PTR p) //Pass Up or Die
 
 void CreateProcess(state_t* syscallState, pcb_PTR corrente){
     //Inizializzazione variabili inizio e fine tempo per syscall 
-    cpu_t current_time_inizio, current_time_fine; 
-    STCK(current_time_inizio);
       
     pcb_PTR newP = allocPcb();
 
@@ -77,8 +75,7 @@ void CreateProcess(state_t* syscallState, pcb_PTR corrente){
 
     }
     syscallState->pc_epc += 4; // program counter + 4
-    STCK(current_time_fine);
-    corrente->p_time += current_time_fine - current_time_inizio; //aggiorno il tempo di vita del processo
+    //aggiorno il tempo di vita del processo
     RELEASE_LOCK(&Global_Lock);
     LDST(syscallState); //ricarico lo stato precedente della cpu
 }
@@ -92,8 +89,6 @@ testa e finisci commenti
 
 void TerminateProcess(state_t* syscallState, pcb_PTR corrente) {
      // Get the PID parameter from a1 register
-     cpu_t current_time_inizio, current_time_fine; 
-     STCK(current_time_inizio);
 
      int pid = syscallState->reg_a1;
     
@@ -139,8 +134,6 @@ void TerminateProcess(state_t* syscallState, pcb_PTR corrente) {
      }
      
      // Release lock
-     STCK(current_time_fine);
-     corrente->p_time += current_time_fine - current_time_inizio; 
      RELEASE_LOCK(&Global_Lock);
      
      // Call the scheduler
@@ -163,8 +156,6 @@ void TerminateProcess(state_t* syscallState, pcb_PTR corrente) {
 
 void Passeren(state_t* syscallState, pcb_PTR corrente){
     //Inizializzazione variabili inizio e fine tempo per syscall 
-    cpu_t current_time_inizio, current_time_fine; 
-    STCK(current_time_inizio);
 
     memaddr* semaddr = (memaddr *)syscallState->reg_a1; //semaddr contiene l'indirizzo del semaforo
     pcb_PTR blockedProc = NULL;
@@ -172,8 +163,6 @@ void Passeren(state_t* syscallState, pcb_PTR corrente){
     if (*semaddr == 1 && ((blockedProc = removeBlocked((int *)semaddr)) != NULL)) //Se il semaforo vale 1, allora è possibile fare una P: controllo se il semaforo ha un processo bloccato e lo sblocco
     { 
         syscallState->pc_epc += 4; // salto di una word per evitare che la syscall vada in loop
-        STCK(current_time_fine);
-        corrente->p_time += current_time_fine - current_time_inizio; //aggiorno il tempo di vita del processo
         insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
         RELEASE_LOCK(&Global_Lock); 
         LDST(syscallState); //ricarico lo stato precedente della cpu
@@ -181,8 +170,6 @@ void Passeren(state_t* syscallState, pcb_PTR corrente){
     { 
         *semaddr = 0; 
         syscallState->pc_epc += 4; 
-        STCK(current_time_fine);
-        corrente->p_time += current_time_fine - current_time_inizio; //aggiorno il tempo di vita del processo
         RELEASE_LOCK(&Global_Lock); 
         LDST(syscallState); //ricarico lo stato precedente della cpu
     } else { //il processo si blocca sul semaforo e viene chiamato lo scheduler
@@ -193,10 +180,10 @@ void Passeren(state_t* syscallState, pcb_PTR corrente){
         if (temp == 1){ //se non è possibile creare nuovi processi
             PANIC();
         }
-
+        cpu_t now;
+        STCK(now);
+        Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]);
         //incremento cpu time del processo corrente
-        STCK(current_time_fine); 
-        corrente->p_time += current_time_fine - current_time_inizio;
         Current_Process[getPRID()] = NULL;
         RELEASE_LOCK(&Global_Lock); //rilascio la variabile globale
         scheduler(); //richiamo allo scheduler
@@ -208,8 +195,6 @@ void Passeren(state_t* syscallState, pcb_PTR corrente){
 
 void Verhogen(state_t* syscallState, pcb_PTR corrente){
     //Inizializzazione variabili inizio e fine tempo per syscall 
-    cpu_t current_time_inizio, current_time_fine;
-    STCK(current_time_inizio);
 
     memaddr* semaddr = (memaddr *)syscallState->reg_a1;
     pcb_PTR blockedProc = NULL;
@@ -217,8 +202,6 @@ void Verhogen(state_t* syscallState, pcb_PTR corrente){
     if (*semaddr == 0 && ((blockedProc = removeBlocked((int *)semaddr)) != NULL))
     { //controlla se nella coda del semaforo se esiste una P: nel caso la blocca e si blocca anche questo processo
         syscallState->pc_epc += 4;  // salto di una word per evitare che la syscall vada in loop
-        STCK(current_time_fine); 
-        corrente->p_time += current_time_fine - current_time_inizio; //aggiorno il tempo di vita del processo
         insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
         RELEASE_LOCK(&Global_Lock); 
         LDST(syscallState); //ricarico lo stato precedente della cpu
@@ -226,8 +209,6 @@ void Verhogen(state_t* syscallState, pcb_PTR corrente){
     {// incremento il semaforo
         *semaddr = 1;
         syscallState->pc_epc += 4;
-        STCK(current_time_fine);
-        corrente->p_time += current_time_fine - current_time_inizio;
         RELEASE_LOCK(&Global_Lock); 
         LDST(syscallState); //ricarico lo stato precedente della cpu
     } else { //il processo viene bloccato sul semaforo
@@ -238,10 +219,10 @@ void Verhogen(state_t* syscallState, pcb_PTR corrente){
         if (temp == 1) { //se non è possibile creare nuovi processi
             PANIC();
         }
-
+        cpu_t now;
+        STCK(now);
+        Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]);
         //incremento cpu time del processo corrente
-        STCK(current_time_fine);
-        corrente->p_time += current_time_fine - current_time_inizio;
         Current_Process[getPRID()] = NULL;
         RELEASE_LOCK(&Global_Lock); //rilascio la variabile globale
         scheduler(); //richiamo allo scheduler
@@ -250,21 +231,17 @@ void Verhogen(state_t* syscallState, pcb_PTR corrente){
 }
 // la funzione GetCPUTime() ci permette di restituire il tempo d'esecuzione del processo che l’ha chiamata
 void GetCPUTime(state_t* syscallState, pcb_PTR corrente) { //non va?
-    cpu_t current_time_inizio, current_time_fine;
-    STCK(current_time_inizio);
-    
-    syscallState->reg_a0 = corrente->p_time; //restituisco il tempo d'esecuzione nell'a0 del chiamante
+    cpu_t now;
+    STCK(now);
+    syscallState->reg_a0 = corrente->p_time + (now - Timestamp[getPRID()]); //restituisco il tempo d'esecuzione nell'a0 del chiamante
     
     syscallState->pc_epc += 4; // program counter + 4
-    STCK(current_time_fine);
-    corrente->p_time += current_time_fine - current_time_inizio;
+    STCK(Timestamp[getPRID()]);
     RELEASE_LOCK(&Global_Lock); 
     LDST(syscallState); //ricarico lo stato precedente della cpu
 }
 
 void WaitForClock(state_t* syscallState, pcb_PTR corrente) {
-    cpu_t current_time_inizio, current_time_fine;
-    STCK(current_time_inizio);
     memaddr* semaddr = &SemaphorePseudo; 
     syscallState->pc_epc += 4; // salto di una word per evitare che la syscall vada in loop
     corrente->p_s = *syscallState;
@@ -274,9 +251,10 @@ void WaitForClock(state_t* syscallState, pcb_PTR corrente) {
     { /* gestione errore del semaforo, magari gestire con una trap */
         PANIC();
     }
+    cpu_t now;
+    STCK(now);
+    Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]);
     
-    STCK(current_time_fine);
-    corrente->p_time += current_time_fine - current_time_inizio; //incremento cpu time del processo corrente
     Current_Process[getPRID()] = NULL;
     RELEASE_LOCK(&Global_Lock); 
     scheduler();
@@ -284,23 +262,17 @@ void WaitForClock(state_t* syscallState, pcb_PTR corrente) {
 
 // la funzione GetSupportData() ci permette di restituire un puntatore alla support struct del processo current.
 void GetSupportData(state_t* syscallState, pcb_PTR corrente) {
-    cpu_t current_time_inizio, current_time_fine;
-    STCK(current_time_inizio);
     support_t* support = corrente->p_supportStruct;
     
     syscallState->reg_a0 = (memaddr)support; //se non esiste NULL sennò puntatore valido
     
-    syscallState->pc_epc += 4; // program counter + 4
-    STCK(current_time_fine);
-    corrente->p_time += current_time_fine - current_time_inizio; //aggiorno il tempo di vita del processo
+    syscallState->pc_epc += 4; // program counter + 
     RELEASE_LOCK(&Global_Lock); 
     LDST(syscallState); //ricarico lo stato precedente della cpu
 }
 
 //la funzione GetProcessID ci permette di restituire l'identificatore del chiamante se il parent è 0, altrimenti restituisce l'id del genitore
 void GetProcessID(state_t* syscallState, pcb_PTR corrente) {
-    cpu_t current_time_inizio, current_time_fine;
-    STCK(current_time_inizio);
 
     if (syscallState->reg_a1 != 0) {
         if (corrente->p_parent != NULL) { // Se il processo corrente ha un padre
@@ -313,16 +285,13 @@ void GetProcessID(state_t* syscallState, pcb_PTR corrente) {
     }
     
     syscallState->pc_epc += 4; // program counter + 4
-    STCK(current_time_fine);
-    corrente->p_time += current_time_fine - current_time_inizio; //aggiorno il tempo di vita del processo
     RELEASE_LOCK(&Global_Lock); 
     LDST(syscallState); //ricarico lo stato precedente della cpu
 }
 
 
 void DoIo(state_t* syscallState, pcb_PTR corrente) {
-    cpu_t current_time_inizio, current_time_fine;
-    STCK(current_time_inizio);
+
     int commandAddr = syscallState->reg_a1;
     int commandValue = syscallState->reg_a2;
     unsigned int base = commandAddr;
@@ -391,8 +360,9 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
     {
         if(pos == 0xC)
         {
-            STCK(current_time_fine); 
-            corrente->p_time += current_time_fine - current_time_inizio;
+            cpu_t now;
+            STCK(now);
+            Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]);
             devAddrBase->term.transm_command = commandValue; 
             Current_Process[getPRID()] = NULL;  
             RELEASE_LOCK(&Global_Lock);     
@@ -400,8 +370,9 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
         }
         else
         {
-            STCK(current_time_fine); 
-            corrente->p_time += current_time_fine - current_time_inizio;
+            cpu_t now;
+            STCK(now);
+            Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]);
             devAddrBase->term.recv_command = commandValue;   
             Current_Process[getPRID()] = NULL;  
             RELEASE_LOCK(&Global_Lock);     
@@ -410,8 +381,9 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
     }
     else
     {
-        STCK(current_time_fine); 
-        corrente->p_time += current_time_fine - current_time_inizio;
+        cpu_t now;
+        STCK(now);
+        Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]);
         devAddrBase->dtp.command = commandValue;
         Current_Process[getPRID()] = NULL;  
         RELEASE_LOCK(&Global_Lock);     

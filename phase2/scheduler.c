@@ -31,6 +31,7 @@ void scheduler(){
         } else { //almeno un processo è pronto
             pcb_t *nextP = removeProcQ(&Ready_Queue); //rimuovo il primo da ready queue
             Current_Process[getPRID()] = nextP ; //getPRID mi dà id del processore. metto, quindi, il pointer alla pcb nel current process della cpu attuale
+            STCK(Timestamp[getPRID()]);
             RELEASE_LOCK(&Global_Lock);
             setTIMER(TIMESLICE); //load 5ms nella plt  
             *((memaddr *) TPR) = 0; //metto cpu priorità alta

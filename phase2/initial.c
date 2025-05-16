@@ -12,6 +12,7 @@ int SemaphoreTerminalReceiver[8];       // Semaphores for terminal receiving
 int SemaphoreTerminalTransmitter[8];    // Semaphores for terminal transmitting
 int SemaphorePseudo;                    // Semaphore for the Pseudo-clock
 unsigned volatile int Global_Lock;      // Global lock per le operazioni sui multi processori
+volatile cpu_t Timestamp[8];            // Time for each process in the cpu
 
 // Dalla gcc/libgcc/memcpy.c
 void *memcpy(void *dest, const void *src, unsigned int len)
@@ -84,6 +85,7 @@ int main(){
     for (int i = 0; i < NCPU; i++)
     {
         Current_Process[i] = NULL;
+        Timestamp[i]= 0;
     }
     
     initASL(); /* Inizializza lista Semafori disponibili */

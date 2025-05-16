@@ -1,4 +1,4 @@
-    #ifndef INITIAL_H_INCLUDED
+#ifndef INITIAL_H_INCLUDED
 #define INITIAL_H_INCLUDED
 
 #include <uriscv/liburiscv.h>
@@ -23,6 +23,7 @@ extern int SemaphoreTerminalReceiver[8];
 extern int SemaphoreTerminalTransmitter[8];
 extern int SemaphorePseudo;
 extern unsigned volatile int Global_Lock;
+extern volatile cpu_t Timestamp[8];
 extern void *memcpy(void *dest, const void *src, unsigned int len);
 void exceptionHandler();
 

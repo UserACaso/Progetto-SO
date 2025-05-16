@@ -4,25 +4,35 @@
 
 void PLTHandler(state_t* syscallState) {
     //Acknowledge the PLT interrupt by loading the timer with a new value using setTIMER.
+    cpu_t now;
     ACQUIRE_LOCK(&Global_Lock);
     setTIMER(TIMESLICE);
     int processore = getPRID();
     if (Current_Process[processore] != NULL)
     {
+        STCK(now);
         //Copy the processor state of the current CPU at the time of the exception into the Current Process’s PCB (p_s) of the current CPU.
         pcb_PTR corrente = Current_Process[processore];
         corrente->p_s = *syscallState;
+        corrente->p_time += (now - Timestamp[processore]);
         //Place the Current Process on the Ready Queue; transitioning the Current Process from the “running” state to the “ready” state.
         Current_Process[processore] = NULL;
         insertProcQ(&Ready_Queue, corrente); 
     }
-    
+    STCK(Timestamp[getPRID()]);
     RELEASE_LOCK(&Global_Lock);
     scheduler();
 }
 
 void PseudoClockHandler(state_t* syscallState){
     ACQUIRE_LOCK(&Global_Lock);
+    if (Current_Process[getPRID()] != NULL)
+    {
+        cpu_t now;
+        STCK(now);
+        Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]);
+    }
+    
     LDIT(PSECOND);
     int* indirizzo = &SemaphorePseudo; 
     pcb_PTR blockedProc = NULL;
@@ -35,15 +45,21 @@ void PseudoClockHandler(state_t* syscallState){
     {
         RELEASE_LOCK(&Global_Lock);
         scheduler();
-    }else {//carica lo stato del processore prima delll'interrupt
+    }else {//carica lo stato del processore prima dell'interrupt
+        STCK(Timestamp[getPRID()]);
         RELEASE_LOCK(&Global_Lock);
         LDST(syscallState);
     }
-    
 }
 
 void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
     ACQUIRE_LOCK(&Global_Lock);
+    if (Current_Process[getPRID()] != NULL)
+    {
+        cpu_t now;
+        STCK(now);
+        Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]);
+    }
     devreg_t* devAddrBase = (devreg_t*)(0x10000054 + ((IntlineNo - 3) * 0x80) + (DevNo * 0x10));
     unsigned int status;
     int* indirizzo;
@@ -67,7 +83,7 @@ void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
                     break;
             }
         pcb_PTR blockedProc = NULL;
-        if (((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB 
+        if (((blockedProc = removeBlocked((int *)indirizzo)) != NULL)){ //caso in cui c'è un PCB
             blockedProc->p_s.reg_a0 = status;
             blockedProc->p_semAdd = NULL;
             insertProcQ(&Ready_Queue, blockedProc); //inserisco il processo sbloccato nella ready queue
@@ -107,7 +123,7 @@ void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
         RELEASE_LOCK(&Global_Lock);
         scheduler();
     }else {//carica lo stato del processore prima delll'interrupt
-        //klog_print("Current_Process != NULL");
+        STCK(Timestamp[getPRID()]);
         RELEASE_LOCK(&Global_Lock);
         LDST(syscallState);
     }
@@ -128,7 +144,7 @@ void InterruptHandler(state_t* syscallState, unsigned int excode){
                 PseudoClockHandler(syscallState);
                 break;
         default:
-            for (int i = 0; i < 5; ++i) {
+            for (int i = 0; i < 5; i++) {
                 memaddr* temp = 0x10000040 + (i*0x4); 
                 for(int dev = 0; dev < 8; dev++)
                 {
