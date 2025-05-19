@@ -1,23 +1,12 @@
 #include "./headers/scheduler.h"
 
 
-void StopInterrupt()
-{
-    unsigned int *irt_entry = (unsigned int*) IRT_START;
-    for (int i = 0; i < IRT_NUM_ENTRY; i++) {
-    *irt_entry = getPRID(); 
-    irt_entry++;
-}
-}
-
-
 void scheduler(){
     //while (1){    
         ACQUIRE_LOCK(&Global_Lock);
         if(emptyProcQ(&Ready_Queue)){ //se ready queue è vuota
             if(Process_Count == 0){ //se non ci sono processi
                 RELEASE_LOCK(&Global_Lock);
-                StopInterrupt();
                 HALT(); //invoco halt
             } else {
                 RELEASE_LOCK(&Global_Lock);
