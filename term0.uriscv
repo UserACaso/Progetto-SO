@@ -25,29 +25,4 @@ p8root starts
 child1 starts
 child2 starts
 leaf process (1) starts
-leaf process (2) starts
-leaf process (3) starts
-leaf process (4) starts
-p8root starts
-child1 starts
-child2 starts
-leaf process (1) starts
-leaf process (2) starts
-leaf process (3) starts
-leaf process (4) starts
-p8root starts
-child1 starts
-child2 starts
-leaf process (1) starts
-leaf process (2) starts
-leaf process (3) starts
-leaf process (4) starts
-p8root starts
-child1 starts
-child2 starts
-leaf process (1) starts
-leaf process (2) starts
-leaf process (3) starts
-leaf process (4) starts
-p1 finishes OK -- TTFN
-System halted 
+leaf process (2)

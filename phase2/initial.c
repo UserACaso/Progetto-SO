@@ -3,16 +3,16 @@
 // Variabili Globali
 int Process_Count;                      // Contatore del numero totale di processi attivi
 struct list_head Ready_Queue;           // Coda di processi pronti per l'esecuzione
-pcb_PTR Current_Process[NCPU];          // Array of pointers to currently executing process on each CPU
-int SemaphoreDisk[8];                   // Semaphores for disk devices (one per device)
-int SemaphoreFlash[8];                  // Semaphores for flash devices
-int SemaphoreNetwork[8];                // Semaphores for network devices
-int SemaphorePrinter[8];                // Semaphores for printer devices
-int SemaphoreTerminalReceiver[8];       // Semaphores for terminal receiving
-int SemaphoreTerminalTransmitter[8];    // Semaphores for terminal transmitting
-int SemaphorePseudo;                    // Semaphore for the Pseudo-clock
-unsigned volatile int Global_Lock;      // Global lock per le operazioni sui multi processori
-volatile cpu_t Timestamp[8];            // Time for each process in the cpu
+pcb_PTR Current_Process[NCPU];          // Array di puntatori ai processi correnti in esecuzione su ogni CPU
+int SemaphoreDisk[8];                   // Semafori per i disk device
+int SemaphoreFlash[8];                  // Semafori per flash devices
+int SemaphoreNetwork[8];                // Semafori per network devices
+int SemaphorePrinter[8];                // S printer devices
+int SemaphoreTerminalReceiver[8];       // Semafori per terminal recieve
+int SemaphoreTerminalTransmitter[8];    // Semafori per terminal transmit
+int SemaphorePseudo;                    // Semaforo Pseudo-clock (Mutua esclusione)
+unsigned volatile int Global_Lock;      // Global lock per le operazioni sui multi-processori
+volatile cpu_t Timestamp[8];            // STCK() del processo corrente quando entra in una delle CPU (usata per calcolare il p_time di un processo)
 
 // Dalla gcc/libgcc/memcpy.c
 void *memcpy(void *dest, const void *src, unsigned int len)
@@ -27,6 +27,7 @@ void *memcpy(void *dest, const void *src, unsigned int len)
 void exceptionHandler() {
     unsigned int cause = getCAUSE();
     unsigned int excode = cause & CAUSE_EXCCODE_MASK; // estraiamo eccezione tramite and con la maschera
+
     // Interrupt?     Exception code (excode)
     //     0          000101010101010101010101010101010
 
@@ -53,11 +54,8 @@ void exceptionHandler() {
 }
 
 int main(){
-
-
     
-    /* INIZIALIZZAZIONE VARIABILI GLOBALI */
-
+    /* Inizializzazione variabili globali */
     Process_Count = 0;
     Global_Lock = 0;
     SemaphorePseudo = 0;
@@ -89,7 +87,7 @@ int main(){
     }
     
     initASL(); /* Inizializza lista Semafori disponibili */
-    initPcbs(); /* Iniizalizza  lista PCB disponibili*/
+    initPcbs(); /* Inizializza lista PCB disponibili*/
 
     for (int i = 0; i < 8; i++) /* Inizializzazione Dei Semafori di Device */
     { 
@@ -105,13 +103,13 @@ int main(){
 
 
 
-    /* ISTANZIA DEL 1° PROCESSO */
+    /* istanza del 1° processo */
 
     pcb_t *first = allocPcb();
     insertProcQ(&Ready_Queue, first); /* Inserimento del primo processo nella ReadyQueue */
     ++Process_Count;
-    first->p_s.mie = MIE_ALL;
-    first->p_s.status = (MSTATUS_MIE_MASK | MSTATUS_MPP_M);
+    first->p_s.mie = MIE_ALL; /*Attivazione di tutti gli interrupt*/
+    first->p_s.status = (MSTATUS_MIE_MASK | MSTATUS_MPP_M); /*Abilitazione kernel mode e interrupt*/
     
     RAMTOP(first->p_s.reg_sp); /* Per istanziare lo stato del primo processo, attiviamo le Interrupt in Kernel Mode cohn RAMTOP */
     first->p_s.pc_epc = (memaddr) test;
@@ -127,7 +125,7 @@ int main(){
     }   
 
 
-    /* INIZIALIZZAZIONE DELLE RESTANTI CPU */
+    /* inizializzazione delle CPU rimanenti */
        
     for(int cpu_id = 1; cpu_id < NCPU; cpu_id++)
     {
@@ -142,5 +140,4 @@ int main(){
     }
     *((memaddr *)TPR) = 0; //deve essere settato per ogni singolo processore
     scheduler();
-    klog_print("rompo");
 }
