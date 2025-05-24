@@ -281,11 +281,6 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
             PANIC();
     }
 
-    //Verificare anche nel caso 2 processi cercano di fermarsi sullo stesso device
-    //nel caso questo accada andiamo a bloccare il processo sulla ASL del semaforo ma non scriviamo sui registri e quando arriva l'interrupt da parte del dispositivo
-    //e andiamo a sbloccare l'altro processo quello che facciamo e' prendere il processo bloccato sulla ASL effettuare l'operazione di i/o
-    //e' basta in questo modo quando arriverà la seconda interrupt del processo che stava aspettando noi lo gestiamo normalmente
-
     syscallState->pc_epc += 4;
     corrente->p_s = *syscallState;
     corrente->p_semAdd = semaddr;
