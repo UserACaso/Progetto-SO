@@ -130,7 +130,8 @@ void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
     }
     else  // Terminal devices
     {
-        // Gestione interrupt trasmettitore
+        // se l'operazione I/O è completata (status diverso da 0,1,3), sblocca il processo, 
+        // gli restituisce lo status nel registro a0, lo rimette nella Ready Queue e fa acknowledge dell'interrupt
         if(devAddrBase->term.transm_status != 0 && devAddrBase->term.transm_status != 1 && devAddrBase->term.transm_status != 3)
         {
             indirizzo = &SemaphoreTerminalTransmitter[DevNo];
@@ -144,16 +145,18 @@ void DeviceHandler(int IntlineNo, int DevNo, state_t* syscallState){
             devAddrBase->term.transm_command = ACK;
         }
 
-        // Gestione interrupt ricevitore
+        // Gestione interrupt ricev
         if(devAddrBase->term.recv_status != 0 && devAddrBase->term.recv_status != 1 && devAddrBase->term.recv_status != 3) {
             indirizzo = &SemaphoreTerminalReceiver[DevNo];
             status = devAddrBase->term.recv_status;
             pcb_PTR blockedProc = NULL;
+
             if (((blockedProc = removeBlocked(indirizzo)) != NULL)){
                 blockedProc->p_s.reg_a0 = status;
                 blockedProc->p_semAdd = NULL;
                 insertProcQ(&Ready_Queue, blockedProc);
             }
+            
             devAddrBase->term.recv_command = ACK;
         }
     }

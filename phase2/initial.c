@@ -7,7 +7,7 @@ pcb_PTR Current_Process[NCPU];          // Array di puntatori ai processi corren
 int SemaphoreDisk[8];                   // Semafori per i disk device
 int SemaphoreFlash[8];                  // Semafori per flash devices
 int SemaphoreNetwork[8];                // Semafori per network devices
-int SemaphorePrinter[8];                // S printer devices
+int SemaphorePrinter[8];                // Semafori printer devices
 int SemaphoreTerminalReceiver[8];       // Semafori per terminal recieve
 int SemaphoreTerminalTransmitter[8];    // Semafori per terminal transmit
 int SemaphorePseudo;                    // Semaforo Pseudo-clock (Mutua esclusione)
@@ -101,8 +101,7 @@ int main(){
     
     LDIT(PSECOND); /* Imposta l'IntervalTimer a 100ms */
 
-
-
+    
     /* istanza del 1° processo */
 
     pcb_t *first = allocPcb();

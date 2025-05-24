@@ -14,7 +14,7 @@ extern void test();
 extern void uTLB_RefillHandler();
 extern int Process_Count;
 extern struct list_head Ready_Queue;
-extern pcb_PTR Current_Process[NCPU]; // da inizializzare a NULL
+extern pcb_PTR Current_Process[NCPU]; 
 extern int SemaphoreDisk[8];
 extern int SemaphoreFlash[8];
 extern int SemaphoreNetwork[8];

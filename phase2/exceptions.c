@@ -10,6 +10,7 @@
     contiene le informazioni dei registri del processore attuale.
 */
 
+
 /*
     Terminator è una funzione ricorsiva che termina un processo e tutti i suoi discendenti.
     Rimuove il processo dalla lista dei figli del padre, termina ricorsivamente tutti i figli,
@@ -161,7 +162,7 @@ void Passeren(state_t* syscallState, pcb_PTR corrente){
         cpu_t now;
         STCK(now);
         Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]); //incremento cpu time del processo corrente
-        Current_Process[getPRID()] = NULL;
+        Current_Process[getPRID()] = NULL; // imposto il Current_process a NULL dato che il processo viene sospeso
         RELEASE_LOCK(&Global_Lock); 
         scheduler(); 
 
@@ -295,8 +296,8 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
         {
             cpu_t now;
             STCK(now);
-            Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]);
-            devAddrBase->term.transm_command = commandValue; 
+            Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]); //incremento cpu time del processo corrente
+            devAddrBase->term.transm_command = commandValue; //scriviamo il comando nel campo corretto del device
             Current_Process[getPRID()] = NULL;
             RELEASE_LOCK(&Global_Lock);     
             scheduler();
@@ -305,8 +306,8 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
         {
             cpu_t now;
             STCK(now);
-            Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]);
-            devAddrBase->term.recv_command = commandValue;   
+            Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]); //incremento cpu time del processo corrente
+            devAddrBase->term.recv_command = commandValue; //scriviamo il comando nel campo corretto del device
             Current_Process[getPRID()] = NULL;  
             RELEASE_LOCK(&Global_Lock);     
             scheduler();
@@ -316,8 +317,8 @@ void DoIo(state_t* syscallState, pcb_PTR corrente) {
     {
         cpu_t now;
         STCK(now);
-        Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]);
-        devAddrBase->dtp.command = commandValue;
+        Current_Process[getPRID()]->p_time += (now - Timestamp[getPRID()]); //incremento cpu time del processo corrente
+        devAddrBase->dtp.command = commandValue; //scriviamo il comando nel campo corretto del device
         Current_Process[getPRID()] = NULL;  
         RELEASE_LOCK(&Global_Lock);     
         scheduler();
