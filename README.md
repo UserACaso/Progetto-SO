@@ -1,6 +1,1 @@
-# MultiPandOS
-
-To compile the project:
-```bash
-mkdir -p build && pushd build && cmake .. && make && popd
-```
+questo branch contiene tutti i backup delle fasi 1 e 2
