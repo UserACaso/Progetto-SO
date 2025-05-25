@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "initial.h": "c",
-        "liburiscv.h": "c",
-        "types.h": "c",
-        "cpu.h": "c",
-        "asl.h": "c"
-    }
-}
