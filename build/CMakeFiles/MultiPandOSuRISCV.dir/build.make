@@ -67,7 +67,7 @@ include CMakeFiles/MultiPandOSuRISCV.dir/compiler_depend.make
 include CMakeFiles/MultiPandOSuRISCV.dir/progress.make
 
 CMakeFiles/MultiPandOSuRISCV: MultiPandOS
-	uriscv-elf2uriscv -k MultiPandOS
+	uriscv-elf2uriscv -k /home/user/Desktop/Progetto-SO-main/build/MultiPandOS
 
 MultiPandOSuRISCV: CMakeFiles/MultiPandOSuRISCV
 MultiPandOSuRISCV: CMakeFiles/MultiPandOSuRISCV.dir/build.make

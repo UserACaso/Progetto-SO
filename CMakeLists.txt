@@ -29,8 +29,7 @@ add_executable(MultiPandOS
 
 add_custom_target(
     MultiPandOSuRISCV ALL
-    COMMAND uriscv-elf2uriscv -k MultiPandOS
+	COMMAND uriscv-elf2uriscv -k ${PROJECT_BINARY_DIR}/MultiPandOS
     BYPRODUCTS MultiPandOS.core.uriscv MultiPandOS.stab.uriscv  
     DEPENDS MultiPandOS
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )

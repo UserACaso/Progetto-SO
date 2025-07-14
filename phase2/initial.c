@@ -108,7 +108,7 @@ int main(){
     insertProcQ(&Ready_Queue, first); /* Inserimento del primo processo nella ReadyQueue */
     ++Process_Count;
     first->p_s.mie = MIE_ALL; /*Attivazione di tutti gli interrupt*/
-    first->p_s.status = (MSTATUS_MIE_MASK | MSTATUS_MPP_M); /*Abilitazione kernel mode e interrupt*/
+    first->p_s.status = (MSTATUS_MPIE_MASK | MSTATUS_MPP_M); /*Abilitazione kernel mode e interrupt*/
     
     RAMTOP(first->p_s.reg_sp); /* Per istanziare lo stato del primo processo, attiviamo le Interrupt in Kernel Mode cohn RAMTOP */
     first->p_s.pc_epc = (memaddr) test;

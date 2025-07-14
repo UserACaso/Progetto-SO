@@ -14,6 +14,11 @@ void scheduler(){
     ACQUIRE_LOCK(&Global_Lock);
     if(emptyProcQ(&Ready_Queue)){ //se ready queue è vuota
         if(Process_Count == 0){ //se non ci sono processi attivi
+            unsigned int *irt_entry = (unsigned int*) IRT_START;
+            for (int i = 0; i < IRT_NUM_ENTRY; i++) {
+                *irt_entry = getPRID();
+                irt_entry++;
+            }
             RELEASE_LOCK(&Global_Lock);
             HALT(); //invoco halt
         } else { //ci sono processi bloccati e nessuno pronto
@@ -30,7 +35,7 @@ void scheduler(){
         Current_Process[getPRID()] = nextP ; //getPRID mi dà id del processore. Metto, quindi, il pointer alla pcb nel current process della cpu attuale
         STCK(Timestamp[getPRID()]);
         RELEASE_LOCK(&Global_Lock);
-        setTIMER(TIMESLICE); //load 5ms nella plt  
+        setTIMER(TIMESLICE * TIMESCALEADDR); //load 5ms nella plt  
         *((memaddr *) TPR) = 0; //metto cpu priorità alta
         LDST(&(nextP->p_s)); //faccio load processor state sul processor state della pcb in Current Process (p_s) della cpu attuale
     }

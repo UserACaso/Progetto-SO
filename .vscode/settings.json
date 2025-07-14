@@ -5,6 +5,11 @@
         "types.h": "c",
         "cpu.h": "c",
         "asl.h": "c",
-        "*.e": "c"
+        "*.e": "c",
+        "initproc.h": "c",
+        "scheduler.h": "c",
+        "interrupts.h": "c",
+        "pcb.h": "c",
+        "const.h": "c"
     }
 }
