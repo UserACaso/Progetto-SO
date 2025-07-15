@@ -40,13 +40,13 @@ void exceptionHandler() {
             case 24 ... 28: /* Per le eccezioni 24-28 (TLB exceptions), passiamo il controllo al TBL Handler */
                 TLBHandler(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID());
                 break;
-            case 8:   /* Per le eccezzioni 8 e 11,  passiamo il controllo al Syscall handler */
+            case 8:   /* Per le eccezioni 8 e 11,  passiamo il controllo al Syscall handler */
                 SYSCALLHandler(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID());
                 break;
             case 11:
                 SYSCALLHandler(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID());
                 break;
-            default:   //Per le eccezzioni 0-7, 9, 10, 12-23 (Program Traps), passiamo il controllo al Trap handler
+            default:   //Per le eccezioni 0-7, 9, 10, 12-23 (Program Traps), passiamo il controllo al Trap handler
                 TRAPHandler(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID()); 
                 break;
         }

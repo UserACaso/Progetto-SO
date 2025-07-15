@@ -10,6 +10,8 @@
         "scheduler.h": "c",
         "interrupts.h": "c",
         "pcb.h": "c",
-        "const.h": "c"
+        "const.h": "c",
+        "syssupport.h": "c",
+        "listx.h": "c"
     }
 }

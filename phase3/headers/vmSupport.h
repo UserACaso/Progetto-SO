@@ -3,4 +3,6 @@
 
 #include "./initProc.h"
 
+void GeneralTLBHandler();
+
 #endif
