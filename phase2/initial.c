@@ -38,7 +38,7 @@ void exceptionHandler() {
         switch (excode) 
         {
             case 24 ... 28: /* Per le eccezioni 24-28 (TLB exceptions), passiamo il controllo al TBL Handler */
-                TLBHandler(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID());
+                TLBHandlerExc(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID());
                 break;
             case 8:   /* Per le eccezioni 8 e 11,  passiamo il controllo al Syscall handler */
                 SYSCALLHandler(GET_EXCEPTION_STATE_PTR(getPRID()), getPRID());

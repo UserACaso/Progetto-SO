@@ -11,16 +11,12 @@ int P3SemaphoreTerminalTransmitter[8];
 volatile unsigned int SwapTableSemaphore = 1;
 
 
-void GeneralExceptionHandler(){}
-void GeneralTLBHandler(){}
-
 
 void main()
 {
     for(int i = 0; i < POOLSIZE; i++)
     {
         SwapPool[i] = (RAMSTART + (64 * PAGESIZE) + (NCPU * PAGESIZE)) + (i * 0x1000);
-        
         
         SwapTable[i].sw_asid = -1;
         SwapTable[i].sw_pageNo = -1;

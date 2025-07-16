@@ -51,4 +51,3 @@ leaf process (3) starts
 leaf process (4) starts
 p1 finishes OK -- TTFN
 System halted 
-m hSystem halted 

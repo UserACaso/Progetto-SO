@@ -4,5 +4,6 @@
 #include "./initProc.h"
 
 void GeneralTLBHandler();
+void Pager();
 
 #endif

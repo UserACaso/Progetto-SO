@@ -22,7 +22,7 @@ void Terminate() {
 
 void WritePrinter(support_t *sPtr) {
     state_t *syscallState = &sPtr->sup_exceptState[GENERALEXCEPT];
-    syscallState
+    //utilizzare systemp call passren e veroghen per semforo P3
 }
 
 void WriteTerminal(support_t *sPtr){
@@ -53,7 +53,7 @@ void P3SYSCALLHandler(support_t *sPtr){
         break;
         
     default:
-        //
+        
         break;
     }
 }

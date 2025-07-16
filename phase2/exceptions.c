@@ -384,12 +384,12 @@ void GetProcessID(state_t* syscallState, pcb_PTR corrente) {
 }
 
 /*
-    TLBHandler(): l'eccezione avviene quando µRISC-V fallisce in una traduzione da un indirizzo logico ad uno fisico.
+    TLBHandlerExc(): l'eccezione avviene quando µRISC-V fallisce in una traduzione da un indirizzo logico ad uno fisico.
     Se il p_supportStruct del processo corrente e' uguale a NULL, allora viene richiamata la funzione Terminator che
     terminerà i processi del tree corrente. Altrimenti avviene un Pass Up.
 */
 
-void TLBHandler(state_t* syscallState, unsigned int cpuid){
+void TLBHandlerExc(state_t* syscallState, unsigned int cpuid){
     ACQUIRE_LOCK(&Global_Lock);
     pcb_PTR corrente = Current_Process[cpuid];
 
@@ -490,4 +490,28 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
         TRAPHandler(syscallState, cpuid);
         break;
     }
+}
+
+void TLBrefillHandler() {
+    unsigned int cpuid = getPRID();
+    state_t *StatoCPU = GET_EXCEPTION_STATE_PTR(cpuid);
+    
+    unsigned int p = StatoCPU->entry_hi >> VPNSHIFT;
+    int i = (p == 0xBFFFF)? 31: p-0x80000; //una pagetable è fatta di 31 entry: la VPN (Virtual Page Number) mi permette di trovare il numero di pagina, ma non 
+                                           //conosco l'indirizzo che poi dovrò utilizzare per la privatePgTbl.
+
+    pcb_PTR current = Current_Process[cpuid];
+    support_t *Supporto = current->p_supportStruct;
+    pteEntry_t Entry = Supporto->sup_privatePgTbl[i];
+    
+    if(!(Entry.pte_entryLO & VALIDON))
+    {
+        Pager(cpuid, StatoCPU);
+        
+    }
+    
+    setENTRYHI(Entry.pte_entryHI);
+    setENTRYLO(Entry.pte_entryLO);
+    TLBWR();
+    LDST(StatoCPU);
 }

@@ -12,6 +12,8 @@
         "pcb.h": "c",
         "const.h": "c",
         "syssupport.h": "c",
-        "listx.h": "c"
+        "listx.h": "c",
+        "exceptions.h": "c",
+        "vmsupport.h": "c"
     }
 }
