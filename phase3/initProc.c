@@ -38,9 +38,9 @@ void main()
     {
         //Inizializzazione dello stato
         Stato[i].mie = MIE_ALL;
-        Stato[i].status = MSTATUS_MPIE_MASK;
-        Stato[i].pc_epc = 0x80000B0;
-        Stato[i].reg_sp = 0xC0000000;
+        Stato[i].status = (MSTATUS_MPIE_MASK  |  MSTATUS_MIE_MASK);
+        Stato[i].pc_epc = UPROCSTARTADDR;
+        Stato[i].reg_sp = USERSTACKTOP;
         Stato[i].cause = 0;    
         Stato[i].entry_hi = (i+1) << ASIDSHIFT;
 
@@ -49,12 +49,12 @@ void main()
         Uproc[i].sup_asid = (i+1);        
 
         //Context
-        Uproc[i].sup_exceptState[PGFAULTEXCEPT].pc_epc = (memaddr)GeneralTLBHandler;
-        Uproc[i].sup_exceptState[GENERALEXCEPT].pc_epc = (memaddr)GeneralExceptionHandler;
-        Uproc[i].sup_exceptState[PGFAULTEXCEPT].status = MSTATUS_MPP_M;
-        Uproc[i].sup_exceptState[GENERALEXCEPT].status = MSTATUS_MPP_M;
-        Uproc[i].sup_exceptState[PGFAULTEXCEPT].reg_sp = &Uproc[i].sup_stackGen[499];
-        Uproc[i].sup_exceptState[GENERALEXCEPT].reg_sp = &Uproc[i].sup_stackGen[499];
+        Uproc[i].sup_exceptContext[PGFAULTEXCEPT].pc = (memaddr)Pager;
+        Uproc[i].sup_exceptContext[GENERALEXCEPT].pc = (memaddr)GeneralExceptionHandler;
+        Uproc[i].sup_exceptContext[PGFAULTEXCEPT].status = MSTATUS_MPP_M;
+        Uproc[i].sup_exceptContext[GENERALEXCEPT].status = MSTATUS_MPP_M;
+        Uproc[i].sup_exceptContext[PGFAULTEXCEPT].stackPtr = &Uproc[i].sup_stackGen[499];
+        Uproc[i].sup_exceptContext[GENERALEXCEPT].stackPtr = &Uproc[i].sup_stackGen[499];
         
         //PageTable
         for(int j = 0; j < USERPGTBLSIZE; j++)

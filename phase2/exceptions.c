@@ -504,12 +504,6 @@ void TLBrefillHandler() {
     support_t *Supporto = current->p_supportStruct;
     pteEntry_t Entry = Supporto->sup_privatePgTbl[i];
     
-    if(!(Entry.pte_entryLO & VALIDON))
-    {
-        Pager(cpuid, StatoCPU);
-        
-    }
-    
     setENTRYHI(Entry.pte_entryHI);
     setENTRYLO(Entry.pte_entryLO);
     TLBWR();

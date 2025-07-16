@@ -16,7 +16,18 @@ void GeneralExceptionHandler() {
     }
 }
 
-void Terminate() {
+void Terminate(support_t *sPtr) {
+    SYSCALL(PASSEREN, &SwapTableSemaphore, 0, 0);
+    for (int i = 0; i < POOLSIZE; i++)
+    {
+        if (sPtr->sup_asid == SwapTable[i].sw_asid) {
+            SwapTable[i].sw_asid = -1;
+            SwapTable[i].sw_pageNo = -1;
+            SwapTable[i].sw_pte = NULL;        
+        }
+
+    }
+    SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
     SYSCALL(TERMPROCESS, 0, 0, 0);
 }
 
@@ -26,18 +37,18 @@ void WritePrinter(support_t *sPtr) {
 }
 
 void WriteTerminal(support_t *sPtr){
-    SYSCALL();
+    //SYSCALL();
 }
 
 void ReadTerminal(support_t *sPtr) {
-    SYSCALL();
+    //SYSCALL();
 }
 
 void P3SYSCALLHandler(support_t *sPtr){
     switch (sPtr->sup_exceptState[GENERALEXCEPT].reg_a0)
     {
     case TERMINATE:
-        Terminate();
+        Terminate(sPtr);
         break;
     
     case WRITEPRINTER:
