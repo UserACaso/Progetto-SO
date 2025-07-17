@@ -70,8 +70,7 @@ void Pager(){
             setSTATUS(oldStatus);
             
             // Punto 9c: Aggiornare il backing store (scrivere su flash)
-            devreg_t* flash_device = (devreg_t*)(0x10000054 + ((IL_FLASH - 3) * 0x80) + 
-                                                ((SwapTable[frameToUse].sw_asid - 1) * 0x10));
+            devreg_t* flash_device = (devreg_t*)(0x10000054 + ((IL_FLASH - 3) * 0x80) + ((SwapTable[frameToUse].sw_asid - 1) * 0x10));
             flash_device->dtp.data0 = SwapPool[frameToUse];
             unsigned int command = (SwapTable[frameToUse].sw_pageNo << 8) | FLASHWRITE;
             int status = SYSCALL(DOIO, &flash_device->dtp.command, command, 0);
@@ -84,8 +83,7 @@ void Pager(){
         }
         
         // Punto 10: Leggere dal backing store del processo corrente
-        devreg_t* flash_device = (devreg_t*)(0x10000054 + ((IL_FLASH - 3) * 0x80) + 
-                                            ((p_asid - 1) * 0x10));
+        devreg_t* flash_device = (devreg_t*)(0x10000054 + ((IL_FLASH - 3) * 0x80) + ((p_asid - 1) * 0x10));
         flash_device->dtp.data0 = SwapPool[frameToUse];
         unsigned int command = (pageNo << 8) | FLASHREAD;
         int status = SYSCALL(DOIO, &flash_device->dtp.command, command, 0);
@@ -102,8 +100,7 @@ void Pager(){
         SwapTable[frameToUse].sw_pte = &sPtr->sup_privatePgTbl[pageNo];
         
         // Punto 12: Aggiornare la Page Table entry
-        SwapTable[frameToUse].sw_pte->pte_entryLO = VALIDON | DIRTYON | 
-                                                     (frameToUse << ENTRYLO_PFN_BIT);
+        SwapTable[frameToUse].sw_pte->pte_entryLO = VALIDON | DIRTYON | (frameToUse << ENTRYLO_PFN_BIT);
         
         // Punto 13: Aggiornare il TLB
         unsigned int oldStatus = getSTATUS();

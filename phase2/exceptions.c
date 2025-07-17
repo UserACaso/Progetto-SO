@@ -496,13 +496,12 @@ void TLBrefillHandler() {
     unsigned int cpuid = getPRID();
     state_t *StatoCPU = GET_EXCEPTION_STATE_PTR(cpuid);
     
-    unsigned int p = StatoCPU->entry_hi >> VPNSHIFT;
-    int i = (p == 0xBFFFF)? 31: p-0x80000; //una pagetable è fatta di 31 entry: la VPN (Virtual Page Number) mi permette di trovare il numero di pagina, ma non 
-                                           //conosco l'indirizzo che poi dovrò utilizzare per la privatePgTbl.
+    unsigned int p = ENTRYHI_GET_VPN(StatoCPU->entry_hi); //una pagetable è fatta di 31 entry: la VPN (Virtual Page Number) mi permette di trovare il numero di pagina, ma non 
+                                                         //conosco l'indirizzo che poi dovrò utilizzare per la privatePgTbl.
 
     pcb_PTR current = Current_Process[cpuid];
     support_t *Supporto = current->p_supportStruct;
-    pteEntry_t Entry = Supporto->sup_privatePgTbl[i];
+    pteEntry_t Entry = Supporto->sup_privatePgTbl[p];
     
     setENTRYHI(Entry.pte_entryHI);
     setENTRYLO(Entry.pte_entryLO);

@@ -65,7 +65,7 @@ int main(){
     { 
         passupvector_t *passupvector;
         passupvector = (passupvector_t *)(0x0FFFF900 + (cpu_id * 0x10));
-        passupvector->tlb_refill_handler = (memaddr)uTLB_RefillHandler;
+        passupvector->tlb_refill_handler = (memaddr)TLBrefillHandler; //sostituito con quello nuovo
 
         if (cpu_id == 0) {
             passupvector->tlb_refill_stackPtr= KERNELSTACK;
