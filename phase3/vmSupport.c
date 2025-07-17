@@ -1,97 +1,134 @@
 #include "./headers/vmSupport.h"
+
 static volatile unsigned int FIFO = 0;
 
 void Pager(){
     support_t *sPtr = SYSCALL(GETSUPPORTPTR, 0, 0, 0);
     
-
-    if((sPtr->sup_exceptState[PGFAULTEXCEPT].cause & CAUSE_EXCCODE_MASK) == 24)
+    // Punto 2-3: Determinare la causa dell'eccezione TLB
+    if((sPtr->sup_exceptState[PGFAULTEXCEPT].cause & CAUSE_EXCCODE_MASK) == EXC_MOD) {
+        // TLB-Modification exception - trattare come program trap
         P3TRAPHandler(sPtr, getPRID());
-    else
-    {
+    }
+    else {
+        // Punto 4: Acquisire mutua esclusione sulla Swap Pool table
         SYSCALL(PASSEREN, &SwapTableSemaphore, 0, 0);
-        unsigned int VirtAddress = sPtr->sup_exceptState[PGFAULTEXCEPT].entry_hi >> VPNSHIFT;
-        unsigned int p_asid_new = sPtr->sup_asid;
-        for(int i = 0; i < POOLSIZE; i++) //caso 6
-        {
-            if(SwapTable[i].sw_pageNo == VirtAddress && SwapTable[i].sw_asid == p_asid_new) {
-                
+        
+        // Punto 5: Determinare il numero della pagina mancante
+        unsigned int pageNo = ENTRYHI_GET_VPN(sPtr->sup_exceptState[PGFAULTEXCEPT].entry_hi);
+        unsigned int p_asid = sPtr->sup_asid;
+        
+        // Punto 6: Controllare se la pagina è già caricata nella swap pool
+        for(int i = 0; i < POOLSIZE; i++) {
+            if(SwapTable[i].sw_asid == p_asid && SwapTable[i].sw_pageNo == pageNo) {
+                // La pagina è già nella swap pool, aggiornare il TLB se necessario
                 unsigned int oldStatus = getSTATUS();
                 unsigned int newStatus = oldStatus & ~MSTATUS_MIE_MASK;
                 setSTATUS(newStatus);
+                
+                // Punto 6a: Controllare se l'entry è nel TLB
                 setENTRYHI(sPtr->sup_exceptState[PGFAULTEXCEPT].entry_hi);
-                TLBP(); //serve per controllare se il TLB è outdated
-                setENTRYHI(SwapTable[i].sw_pte->pte_entryHI);
-                setENTRYLO(SwapTable[i].sw_pte->pte_entryLO);
-                TLBWI();
+                TLBP();
+                
+                // Punto 6b: Se l'entry è nel TLB (P=0), aggiornala
+                if(!(getINDEX() & PRESENTFLAG)) {
+                    setENTRYHI(SwapTable[i].sw_pte->pte_entryHI);
+                    setENTRYLO(SwapTable[i].sw_pte->pte_entryLO);
+                    TLBWI();
+                }
+                
                 setSTATUS(oldStatus);
+                
+                // Punto 6c: Rilasciare mutua esclusione e ritornare
                 SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
                 LDST(&sPtr->sup_exceptState[PGFAULTEXCEPT]);
-            } 
+            }
         }
-
-        if(SwapTable[FIFO = (FIFO+1)%POOLSIZE].sw_asid != -1 && SwapTable[FIFO].sw_pageNo != -1) { //caso 9
-                
+        
+        // Punto 7: Scegliere un frame dalla Swap Pool
+        unsigned int frameToUse = FIFO;
+        FIFO = (FIFO + 1) % POOLSIZE;
+        
+        // Punto 8-9: Determinare se il frame è occupato
+        if(SwapTable[frameToUse].sw_asid != -1) {
+            // Il frame è occupato, deve essere liberato
             unsigned int oldStatus = getSTATUS();
-            unsigned int newStatus = oldStatus & ~MSTATUS_MIE_MASK; //disabilitazione interrupt
+            unsigned int newStatus = oldStatus & ~MSTATUS_MIE_MASK;
             setSTATUS(newStatus);
-
-            SwapTable[FIFO].sw_pte->pte_entryLO &= ~VALIDON; //invalidazione Table
-            setENTRYHI(sPtr->sup_exceptState[PGFAULTEXCEPT].entry_hi);
+            
+            // Punto 9a: Aggiornare la Page Table del processo che occupa il frame
+            SwapTable[frameToUse].sw_pte->pte_entryLO &= ~VALIDON;
+            
+            // Punto 9b: Aggiornare il TLB se necessario
+            setENTRYHI(SwapTable[frameToUse].sw_pte->pte_entryHI);
             TLBP();
-            if(!(getINDEX() & PRESENTFLAG))
-            {
-                setENTRYLO(SwapTable[FIFO].sw_pte->pte_entryLO); //invalidazione TLB
+            if(!(getINDEX() & PRESENTFLAG)) {
+                setENTRYLO(SwapTable[frameToUse].sw_pte->pte_entryLO);
                 TLBWI();
             }
+            
             setSTATUS(oldStatus);
             
-            //nuovo flash device su cui bisogna scrivere
-            devreg_t* flash_device = (devreg_t*)(0x10000054 + ((IL_FLASH - 3) * 0x80) + ((SwapTable[FIFO].sw_asid - 1) * 0x10)); //calcolo indirizzo flash device
-            flash_device->dtp.data0 = SwapPool[FIFO];
-            unsigned int command = (SwapTable[FIFO].sw_pageNo << 8) | FLASHWRITE;
-            SYSCALL(DOIO, &flash_device->dtp.command, command, 0);
-            //program trap
+            // Punto 9c: Aggiornare il backing store (scrivere su flash)
+            devreg_t* flash_device = (devreg_t*)(0x10000054 + ((IL_FLASH - 3) * 0x80) + 
+                                                ((SwapTable[frameToUse].sw_asid - 1) * 0x10));
+            flash_device->dtp.data0 = SwapPool[frameToUse];
+            unsigned int command = (SwapTable[frameToUse].sw_pageNo << 8) | FLASHWRITE;
+            int status = SYSCALL(DOIO, &flash_device->dtp.command, command, 0);
+            
+            // Gestire errori I/O come program trap
+            if(status != READY) {
+                SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
+                P3TRAPHandler(sPtr, getPRID());
+            }
         }
-        //flash device vecchio su cui bisogna scrivere
-        devreg_t* flash_device = (devreg_t*)(0x10000054 + ((IL_FLASH - 3) * 0x80) + ((p_asid_new - 1) * 0x10));
-        flash_device->dtp.data0 = SwapPool[FIFO];
-        unsigned int command = (SwapTable[FIFO].sw_pageNo << 8) | FLASHREAD;
-        SYSCALL(DOIO, &flash_device->dtp.command, command, 0);
-        //program trap
-        SwapTable[FIFO].sw_asid = p_asid_new;
-        SwapTable[FIFO].sw_pageNo = (VirtAddress == 0xBFFFF)? 31: VirtAddress-0x80000;
-        SwapTable[FIFO].sw_pte = &sPtr->sup_privatePgTbl[SwapTable[FIFO].sw_pageNo];
-        SwapTable[FIFO].sw_pte->pte_entryLO = ENTRYLO_VALID | (FIFO << ENTRYLO_PFN_BIT) | ENTRYLO_DIRTY; // dove N serve per non cache (1 bipassa, 0 non bipassa)
         
+        // Punto 10: Leggere dal backing store del processo corrente
+        devreg_t* flash_device = (devreg_t*)(0x10000054 + ((IL_FLASH - 3) * 0x80) + 
+                                            ((p_asid - 1) * 0x10));
+        flash_device->dtp.data0 = SwapPool[frameToUse];
+        unsigned int command = (pageNo << 8) | FLASHREAD;
+        int status = SYSCALL(DOIO, &flash_device->dtp.command, command, 0);
+        
+        // Gestire errori I/O come program trap
+        if(status != READY) {
+            SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
+            P3TRAPHandler(sPtr, getPRID());
+        }
+        
+        // Punto 11: Aggiornare la Swap Pool table
+        SwapTable[frameToUse].sw_asid = p_asid;
+        SwapTable[frameToUse].sw_pageNo = pageNo;
+        SwapTable[frameToUse].sw_pte = &sPtr->sup_privatePgTbl[pageNo];
+        
+        // Punto 12: Aggiornare la Page Table entry
+        SwapTable[frameToUse].sw_pte->pte_entryLO = VALIDON | DIRTYON | 
+                                                     (frameToUse << ENTRYLO_PFN_BIT);
+        
+        // Punto 13: Aggiornare il TLB
         unsigned int oldStatus = getSTATUS();
         unsigned int newStatus = oldStatus & ~MSTATUS_MIE_MASK;
         setSTATUS(newStatus);
-
-        setENTRYHI(SwapTable[FIFO].sw_pte->pte_entryHI);
-        TLBP();
-        if(!(getINDEX() & PRESENTFLAG))
-        {
-            setENTRYLO(SwapTable[FIFO].sw_pte->pte_entryLO);
+        
+        setENTRYHI(SwapTable[frameToUse].sw_pte->pte_entryHI);
+        TLBP(); // Cerca se l'entry è già nel TLB
+        
+        if(!(getINDEX() & PRESENTFLAG)) {
+            // Entry trovata (P=0), aggiorna lo slot esistente
+            setENTRYLO(SwapTable[frameToUse].sw_pte->pte_entryLO);
             TLBWI();
+        } else {
+            // Entry non trovata (P=1), scrivi in uno slot random
+            setENTRYLO(SwapTable[frameToUse].sw_pte->pte_entryLO);
+            TLBWR();
         }
+        
         setSTATUS(oldStatus);
-
+        
+        // Punto 14: Rilasciare mutua esclusione
         SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
+        
+        // Punto 15: Ritornare controllo al processo
         LDST(&sPtr->sup_exceptState[PGFAULTEXCEPT]);
     }
 }
-/*
-    punto 6.
-        controllo dell'intera swap pool, indipendentemente dal bit di validità
-
-    Altrimenti
-
-    punto 9.
-        Bit di validità V=0: in RAM manca la pagina del TLB, quindi bisogna 
-        spostare il frame corretto in RAM (ed eventualmente modificare l'indirizzo
-        logico[?] del TLB)
-
- 
-
-*/
