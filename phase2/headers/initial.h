@@ -3,6 +3,7 @@
 
 #include <uriscv/liburiscv.h>
 #include <uriscv/cpu.h>
+#include <uriscv/arch.h>
 #include <uriscv/types.h>
 #include "../../phase1/headers/asl.h"
 #include "../../phase1/headers/pcb.h"

@@ -70,7 +70,8 @@ void Pager(){
             setSTATUS(oldStatus);
             
             // Punto 9c: Aggiornare il backing store (scrivere su flash)
-            devreg_t* flash_device = (devreg_t*)(0x10000054 + ((IL_FLASH - 3) * 0x80) + ((SwapTable[frameToUse].sw_asid - 1) * 0x10));
+            int deviceNo = SwapTable[frameToUse].sw_asid - 1;  // ASID 1-8 → Device 0-7
+            devreg_t* flash_device = DEV_REG_ADDR(IL_FLASH, deviceNo);
             flash_device->dtp.data0 = SwapPool[frameToUse];
             unsigned int command = (SwapTable[frameToUse].sw_pageNo << 8) | FLASHWRITE;
             int status = SYSCALL(DOIO, &flash_device->dtp.command, command, 0);
@@ -83,7 +84,8 @@ void Pager(){
         }
         
         // Punto 10: Leggere dal backing store del processo corrente
-        devreg_t* flash_device = (devreg_t*)(0x10000054 + ((IL_FLASH - 3) * 0x80) + ((p_asid - 1) * 0x10));
+        int deviceNo = SwapTable[frameToUse].sw_asid - 1;  // ASID 1-8 → Device 0-7
+        devreg_t* flash_device = DEV_REG_ADDR(IL_FLASH, deviceNo);
         flash_device->dtp.data0 = SwapPool[frameToUse];
         unsigned int command = (pageNo << 8) | FLASHREAD;
         int status = SYSCALL(DOIO, &flash_device->dtp.command, command, 0);
