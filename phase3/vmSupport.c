@@ -8,7 +8,7 @@ void Pager(){
     // Punto 2-3: Determinare la causa dell'eccezione TLB
     if((sPtr->sup_exceptState[PGFAULTEXCEPT].cause & CAUSE_EXCCODE_MASK) == EXC_MOD) {
         // TLB-Modification exception - trattare come program trap
-        P3TRAPHandler(sPtr, getPRID());
+        P3TRAPHandler(sPtr);
     }
     else {
         // Punto 4: Acquisire mutua esclusione sulla Swap Pool table
@@ -79,7 +79,7 @@ void Pager(){
             // Gestire errori I/O come program trap
             if(status != READY) {
                 SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
-                P3TRAPHandler(sPtr, getPRID());
+                P3TRAPHandler(sPtr);
             }
         }
         
@@ -93,7 +93,7 @@ void Pager(){
         // Gestire errori I/O come program trap
         if(status != READY) {
             SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
-            P3TRAPHandler(sPtr, getPRID());
+            P3TRAPHandler(sPtr);
         }
         
         // Punto 11: Aggiornare la Swap Pool table
