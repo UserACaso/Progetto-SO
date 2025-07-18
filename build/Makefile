@@ -286,30 +286,6 @@ phase2/klog.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase2/klog.c.s
 .PHONY : phase2/klog.c.s
 
-phase2/p2test.o: phase2/p2test.c.o
-.PHONY : phase2/p2test.o
-
-# target to build an object file
-phase2/p2test.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase2/p2test.c.o
-.PHONY : phase2/p2test.c.o
-
-phase2/p2test.i: phase2/p2test.c.i
-.PHONY : phase2/p2test.i
-
-# target to preprocess a source file
-phase2/p2test.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase2/p2test.c.i
-.PHONY : phase2/p2test.c.i
-
-phase2/p2test.s: phase2/p2test.c.s
-.PHONY : phase2/p2test.s
-
-# target to generate assembly for a file
-phase2/p2test.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase2/p2test.c.s
-.PHONY : phase2/p2test.c.s
-
 phase2/scheduler.o: phase2/scheduler.c.o
 .PHONY : phase2/scheduler.o
 
@@ -333,6 +309,78 @@ phase2/scheduler.s: phase2/scheduler.c.s
 phase2/scheduler.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase2/scheduler.c.s
 .PHONY : phase2/scheduler.c.s
+
+phase3/initProc.o: phase3/initProc.c.o
+.PHONY : phase3/initProc.o
+
+# target to build an object file
+phase3/initProc.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase3/initProc.c.o
+.PHONY : phase3/initProc.c.o
+
+phase3/initProc.i: phase3/initProc.c.i
+.PHONY : phase3/initProc.i
+
+# target to preprocess a source file
+phase3/initProc.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase3/initProc.c.i
+.PHONY : phase3/initProc.c.i
+
+phase3/initProc.s: phase3/initProc.c.s
+.PHONY : phase3/initProc.s
+
+# target to generate assembly for a file
+phase3/initProc.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase3/initProc.c.s
+.PHONY : phase3/initProc.c.s
+
+phase3/sysSupport.o: phase3/sysSupport.c.o
+.PHONY : phase3/sysSupport.o
+
+# target to build an object file
+phase3/sysSupport.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase3/sysSupport.c.o
+.PHONY : phase3/sysSupport.c.o
+
+phase3/sysSupport.i: phase3/sysSupport.c.i
+.PHONY : phase3/sysSupport.i
+
+# target to preprocess a source file
+phase3/sysSupport.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase3/sysSupport.c.i
+.PHONY : phase3/sysSupport.c.i
+
+phase3/sysSupport.s: phase3/sysSupport.c.s
+.PHONY : phase3/sysSupport.s
+
+# target to generate assembly for a file
+phase3/sysSupport.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase3/sysSupport.c.s
+.PHONY : phase3/sysSupport.c.s
+
+phase3/vmSupport.o: phase3/vmSupport.c.o
+.PHONY : phase3/vmSupport.o
+
+# target to build an object file
+phase3/vmSupport.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase3/vmSupport.c.o
+.PHONY : phase3/vmSupport.c.o
+
+phase3/vmSupport.i: phase3/vmSupport.c.i
+.PHONY : phase3/vmSupport.i
+
+# target to preprocess a source file
+phase3/vmSupport.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase3/vmSupport.c.i
+.PHONY : phase3/vmSupport.c.i
+
+phase3/vmSupport.s: phase3/vmSupport.c.s
+.PHONY : phase3/vmSupport.s
+
+# target to generate assembly for a file
+phase3/vmSupport.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase3/vmSupport.c.s
+.PHONY : phase3/vmSupport.c.s
 
 usr/local/share/uriscv/crtso.o: usr/local/share/uriscv/crtso.S.o
 .PHONY : usr/local/share/uriscv/crtso.o
@@ -378,12 +426,18 @@ help:
 	@echo "... phase2/klog.o"
 	@echo "... phase2/klog.i"
 	@echo "... phase2/klog.s"
-	@echo "... phase2/p2test.o"
-	@echo "... phase2/p2test.i"
-	@echo "... phase2/p2test.s"
 	@echo "... phase2/scheduler.o"
 	@echo "... phase2/scheduler.i"
 	@echo "... phase2/scheduler.s"
+	@echo "... phase3/initProc.o"
+	@echo "... phase3/initProc.i"
+	@echo "... phase3/initProc.s"
+	@echo "... phase3/sysSupport.o"
+	@echo "... phase3/sysSupport.i"
+	@echo "... phase3/sysSupport.s"
+	@echo "... phase3/vmSupport.o"
+	@echo "... phase3/vmSupport.i"
+	@echo "... phase3/vmSupport.s"
 	@echo "... usr/local/share/uriscv/crtso.o"
 	@echo "... usr/local/share/uriscv/liburiscv.o"
 .PHONY : help

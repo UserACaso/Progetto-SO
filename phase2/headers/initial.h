@@ -11,7 +11,6 @@
 #include "./exceptions.h"
 #include "./scheduler.h"
 
-extern void test();
 extern void uTLB_RefillHandler();
 extern int Process_Count;
 extern struct list_head Ready_Queue;
@@ -26,6 +25,7 @@ extern int SemaphorePseudo;
 extern unsigned volatile int Global_Lock;
 extern volatile cpu_t Timestamp[8];
 extern void *memcpy(void *dest, const void *src, unsigned int len);
+extern void tester();
 void exceptionHandler();
 
 #endif

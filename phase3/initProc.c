@@ -12,7 +12,7 @@ volatile unsigned int SwapTableSemaphore = 1;
 
 
 
-void main()
+void tester()
 {
     for(int i = 0; i < POOLSIZE; i++)
     {

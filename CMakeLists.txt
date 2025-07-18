@@ -18,11 +18,13 @@ add_executable(MultiPandOS
     phase1/pcb.c 
     phase1/asl.c 
     phase2/initial.c 
-    phase2/p2test.c 
     phase2/interrupts.c 
     phase2/exceptions.c 
     phase2/scheduler.c 
     phase2/klog.c
+    phase3/initProc.c
+    phase3/sysSupport.c
+    phase3/vmSupport.c
     ${URISCV_SRC}/crtso.S 
     ${URISCV_SRC}/liburiscv.S
 )

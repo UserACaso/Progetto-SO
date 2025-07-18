@@ -111,7 +111,7 @@ int main(){
     first->p_s.status = (MSTATUS_MPIE_MASK | MSTATUS_MPP_M); /*Abilitazione kernel mode e interrupt*/
     
     RAMTOP(first->p_s.reg_sp); /* Per istanziare lo stato del primo processo, attiviamo le Interrupt in Kernel Mode cohn RAMTOP */
-    first->p_s.pc_epc = (memaddr) test;
+    first->p_s.pc_epc = (memaddr) tester;
 
     for (int i = 0; i < IRT_NUM_ENTRY; i++) { /* Inizializzazione Interrupt Routing Table */
         memaddr irt_addr;

@@ -11,6 +11,7 @@ extern int P3SemaphorePrinter[8];
 extern int P3SemaphoreTerminalReceiver[8];
 extern int P3SemaphoreTerminalTransmitter[8];
 extern volatile unsigned int SwapTableSemaphore;
+extern void tester();
 extern void Pager();
 extern void GeneralExceptionHandler();
 #endif

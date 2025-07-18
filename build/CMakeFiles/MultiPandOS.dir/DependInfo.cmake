@@ -25,8 +25,10 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/user/Desktop/Progetto-SO-main/phase2/initial.c" "CMakeFiles/MultiPandOS.dir/phase2/initial.c.o" "gcc" "CMakeFiles/MultiPandOS.dir/phase2/initial.c.o.d"
   "/home/user/Desktop/Progetto-SO-main/phase2/interrupts.c" "CMakeFiles/MultiPandOS.dir/phase2/interrupts.c.o" "gcc" "CMakeFiles/MultiPandOS.dir/phase2/interrupts.c.o.d"
   "/home/user/Desktop/Progetto-SO-main/phase2/klog.c" "CMakeFiles/MultiPandOS.dir/phase2/klog.c.o" "gcc" "CMakeFiles/MultiPandOS.dir/phase2/klog.c.o.d"
-  "/home/user/Desktop/Progetto-SO-main/phase2/p2test.c" "CMakeFiles/MultiPandOS.dir/phase2/p2test.c.o" "gcc" "CMakeFiles/MultiPandOS.dir/phase2/p2test.c.o.d"
   "/home/user/Desktop/Progetto-SO-main/phase2/scheduler.c" "CMakeFiles/MultiPandOS.dir/phase2/scheduler.c.o" "gcc" "CMakeFiles/MultiPandOS.dir/phase2/scheduler.c.o.d"
+  "/home/user/Desktop/Progetto-SO-main/phase3/initProc.c" "CMakeFiles/MultiPandOS.dir/phase3/initProc.c.o" "gcc" "CMakeFiles/MultiPandOS.dir/phase3/initProc.c.o.d"
+  "/home/user/Desktop/Progetto-SO-main/phase3/sysSupport.c" "CMakeFiles/MultiPandOS.dir/phase3/sysSupport.c.o" "gcc" "CMakeFiles/MultiPandOS.dir/phase3/sysSupport.c.o.d"
+  "/home/user/Desktop/Progetto-SO-main/phase3/vmSupport.c" "CMakeFiles/MultiPandOS.dir/phase3/vmSupport.c.o" "gcc" "CMakeFiles/MultiPandOS.dir/phase3/vmSupport.c.o.d"
   )
 
 # Targets to which this target links.

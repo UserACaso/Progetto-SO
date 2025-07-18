@@ -17,7 +17,7 @@ void GeneralExceptionHandler() {
 }
 
 void Terminate(support_t *sPtr) {
-    SYSCALL(PASSEREN, &SwapTableSemaphore, 0, 0);
+    SYSCALL(PASSEREN, (memaddr)&SwapTableSemaphore, 0, 0);
     for (int i = 0; i < POOLSIZE; i++)
     {
         if (sPtr->sup_asid == SwapTable[i].sw_asid) {
@@ -26,7 +26,7 @@ void Terminate(support_t *sPtr) {
             SwapTable[i].sw_pte = NULL;        
         }
     }
-    SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
+    SYSCALL(VERHOGEN, (memaddr)&SwapTableSemaphore, 0, 0);
     SYSCALL(TERMPROCESS, 0, 0, 0);
 }
 
@@ -105,7 +105,7 @@ void ReadTerminal(support_t *sPtr) {
     char carattere;
 
     SYSCALL(PASSEREN, (int)&P3SemaphoreTerminalReceiver[sPtr->sup_asid-1], 0, 0); /* P(sem_term_mut) */
-    while (*s != EOS && count < syscallState->reg_a2 && count < 127) {
+    while (count < syscallState->reg_a2 && count < 127) {
         memaddr value = RECEIVECHAR;
         status         = SYSCALL(DOIO, (int)command, (int)value, 0);
         if ((status & 0xFF) != RECVD) {
@@ -123,6 +123,10 @@ void ReadTerminal(support_t *sPtr) {
         }
         count++;
         s++;
+    }
+
+    if (count > 0 && *(s-1) != EOS) {
+        *s = EOS;
     }
     SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalReceiver[sPtr->sup_asid-1], 0, 0); /* V(sem_term_mut) */
     syscallState->reg_a0 = count;
