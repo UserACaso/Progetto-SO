@@ -63,6 +63,11 @@ void main()
             Uproc[i].sup_privatePgTbl[j].pte_entryHI = (VPN << VPNSHIFT) | ((i+1) << ASIDSHIFT);
             Uproc[i].sup_privatePgTbl[j].pte_entryLO = (DIRTYON & ~VALIDON);
         }
-        SYSCALL(CREATEPROCESS, &Stato[i], 0, &Uproc[i]);
+        int result = SYSCALL(CREATEPROCESS, &Stato[i], 0, &Uproc[i]);
+        if (result < 0)
+        {
+            PANIC();
+        }
+        
     }
 }

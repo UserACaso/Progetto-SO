@@ -84,9 +84,9 @@ void Pager(){
         }
         
         // Punto 10: Leggere dal backing store del processo corrente
-        int deviceNo = SwapTable[frameToUse].sw_asid - 1;  // ASID 1-8 → Device 0-7
+        int deviceNo = p_asid - 1;  // ASID 1-8 → Device 0-7
         devreg_t* flash_device = DEV_REG_ADDR(IL_FLASH, deviceNo);
-        flash_device->dtp.data0 = SwapPool[frameToUse];
+        flash_device->dtp.data0 = (memaddr)SwapPool[frameToUse];
         unsigned int command = (pageNo << 8) | FLASHREAD;
         int status = SYSCALL(DOIO, &flash_device->dtp.command, command, 0);
         
