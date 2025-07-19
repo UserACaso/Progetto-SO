@@ -9,8 +9,6 @@ file(REMOVE_RECURSE
   "CMakeFiles/MultiPandOS.dir/phase2/initial.c.o.d"
   "CMakeFiles/MultiPandOS.dir/phase2/interrupts.c.o"
   "CMakeFiles/MultiPandOS.dir/phase2/interrupts.c.o.d"
-  "CMakeFiles/MultiPandOS.dir/phase2/klog.c.o"
-  "CMakeFiles/MultiPandOS.dir/phase2/klog.c.o.d"
   "CMakeFiles/MultiPandOS.dir/phase2/scheduler.c.o"
   "CMakeFiles/MultiPandOS.dir/phase2/scheduler.c.o.d"
   "CMakeFiles/MultiPandOS.dir/phase3/initProc.c.o"
