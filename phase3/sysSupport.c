@@ -1,16 +1,26 @@
 #include "./headers/sysSupport.h"
+#include "../phase2/klog.c"
 
 void GeneralExceptionHandler() {
+    unsigned int cpuid = getPRID();
     support_t *sPtr = SYSCALL(GETSUPPORTPTR, 0, 0, 0);
-    switch (sPtr->sup_exceptState[GENERALEXCEPT].cause & CAUSE_EXCCODE_MASK)
+    int cause_code = sPtr->sup_exceptState[GENERALEXCEPT].cause & CAUSE_EXCCODE_MASK;
+    
+    klog_print("GeneralExceptionHandler called with cause: ");
+    klog_print_dec(cause_code);
+    
+    switch (cause_code)
     {
     case 8:
+        klog_print("Exception code 8 - calling P3SYSCALLHandler");
         P3SYSCALLHandler(sPtr);
         break;
     case 11:
+        klog_print("Exception code 11 - calling P3SYSCALLHandler");
         P3SYSCALLHandler(sPtr);
         break;
     default:
+        klog_print("Other exception - calling P3TRAPHandler");
         P3TRAPHandler(sPtr); 
         break;
     }
@@ -18,6 +28,8 @@ void GeneralExceptionHandler() {
 
 void Terminate(support_t *sPtr) {
     SYSCALL(PASSEREN, (memaddr)&SwapTableSemaphore, 0, 0);
+        klog_print("terminate");
+
     for (int i = 0; i < POOLSIZE; i++)
     {
         if (sPtr->sup_asid == SwapTable[i].sw_asid) {
@@ -34,6 +46,8 @@ void WritePrinter(support_t *sPtr) {
     state_t *syscallState = &sPtr->sup_exceptState[GENERALEXCEPT];
     //utilizzare systemp call passren e veroghen per semforo P3
     if(syscallState->reg_a2 < 0 || syscallState->reg_a2 > 128)
+        klog_print("wprinter");
+
         SYSCALL(TERMPROCESS, 0, 0, 0);
 
     int count = 0;
@@ -65,6 +79,7 @@ void WriteTerminal(support_t *sPtr){
     state_t *syscallState = &sPtr->sup_exceptState[GENERALEXCEPT];
     //utilizzare systemp call passren e veroghen per semforo P3
     if(syscallState->reg_a2 < 0 || syscallState->reg_a2 > 128)
+        klog_print("writeterminal");
         SYSCALL(TERMPROCESS, 0, 0, 0);
 
     int count = 0;
@@ -135,25 +150,34 @@ void ReadTerminal(support_t *sPtr) {
 }
 
 void P3SYSCALLHandler(support_t *sPtr){
-    switch (sPtr->sup_exceptState[GENERALEXCEPT].reg_a0)
+    int syscall_code = sPtr->sup_exceptState[GENERALEXCEPT].reg_a0;
+    klog_print("P3SYSCALLHandler called with code: ");
+    klog_print_dec(syscall_code);
+    
+    switch (syscall_code)
     {
     case TERMINATE:
+        klog_print("Calling Terminate");
         Terminate(sPtr);
         break;
     
     case WRITEPRINTER:
+        klog_print("Calling WritePrinter");
         WritePrinter(sPtr);
         break;
     
     case WRITETERMINAL:
+        klog_print("Calling WriteTerminal");
         WriteTerminal(sPtr);
         break;
     
     case READTERMINAL:
+        klog_print("Calling ReadTerminal");
         ReadTerminal(sPtr);
         break;
         
     default:
+        klog_print("Unknown syscall, calling P3TRAPHandler");
         P3TRAPHandler(sPtr);
         break;
     }

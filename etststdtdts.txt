@@ -1,0 +1,26 @@
+tester() called - starting initialization
+CreateProcess: Support struct assigned to PID: 2
+U-proc created successfully
+CreateProcess: Support struct assigned to PID: 3
+U-proc created successfully
+CreateProcess: Support struct assigned to PID: 4
+U-proc created successfully
+Create Process: Support struct assigned to PID: 5
+U-proc created successfully
+CreateProcess: Support struct assigned to PID: 6
+U-proc created successfully
+CreateProcess: Support struct assigned to PID: 7
+U-proc created successfully
+CreateProcess: Support struct assigned to PID: 8
+U-proc created successfully
+CreateProcess: Support struct assigned to PID: 9
+U-proc created successfully
+tester() finished - terminating
+TLBHandlerExc: Pass Up to Pager for PID: 2
+Pager called for ASID: 1
+Pager: TLB miss, handling page fault
+Pager: Acquiring SwapTableSemaphore
+Pager: SwapTableSemaphore acquired
+Pager: Page number and ASID determined
+Pager: Searching in SwapTable
+Pager: Page not found in SwapTable, loading from flash                

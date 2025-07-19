@@ -16,4 +16,5 @@ CMakeFiles/MultiPandOS.dir/phase3/sysSupport.c.o: \
  /home/user/Desktop/Progetto-SO-main/phase3/./headers/./../../phase2/headers/././initial.h \
  /home/user/Desktop/Progetto-SO-main/phase3/./headers/./../../phase2/headers/./exceptions.h \
  /home/user/Desktop/Progetto-SO-main/phase3/./headers/./../../phase2/headers/./initial.h \
- /home/user/Desktop/Progetto-SO-main/phase3/./headers/./../../phase2/headers/./scheduler.h
+ /home/user/Desktop/Progetto-SO-main/phase3/./headers/./../../phase2/headers/./scheduler.h \
+ /home/user/Desktop/Progetto-SO-main/phase3/../phase2/klog.c

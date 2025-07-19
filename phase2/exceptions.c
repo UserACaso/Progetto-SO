@@ -1,5 +1,4 @@
 #include "./headers/exceptions.h"
-#include "klog.c"
 
 #define TERM0ADDR 0x10000254
 
@@ -66,6 +65,12 @@ void CreateProcess(state_t* syscallState, pcb_PTR corrente){
         support_t* newSupport = (support_t*) syscallState->reg_a3; //ottengo il puntatore alla struttura di supporto (se non esiste è NULL)
         newP->p_s = *newState;
         newP->p_supportStruct = newSupport;
+        
+        if (newSupport != NULL) {
+            klog_print("CreateProcess: Support struct assigned");
+        } else {
+            klog_print("CreateProcess: Support struct is NULL");
+        }
 
         insertProcQ(&Ready_Queue, newP);     // lo inserisco nella ready queue
         insertChild(corrente, newP);         // lo aggiungo come figlio del processo corrente
@@ -424,12 +429,16 @@ void TRAPHandler(state_t* syscallState, unsigned int cpuid) {
 
     if (corrente->p_supportStruct == NULL) //termino tutti i processi correlati al processo corrente e se stesso
     {
+        klog_print("TRAPHandler: No support struct, PID: ");
+        klog_print_dec(corrente->p_pid);
+        klog_print(" terminating");
         Terminator(corrente);
         RELEASE_LOCK(&Global_Lock);
         scheduler();
     }
     else //passed up
     {
+        klog_print("TRAPHandler: Doing Pass Up to GeneralExceptionHandler");
         corrente->p_supportStruct->sup_exceptState[GENERALEXCEPT] = *syscallState;
         context_t temp = corrente->p_supportStruct->sup_exceptContext[GENERALEXCEPT];
         RELEASE_LOCK(&Global_Lock);
@@ -443,8 +452,9 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
     ACQUIRE_LOCK(&Global_Lock);
     pcb_PTR corrente = Current_Process[cpuid];
 
-    if((corrente->p_s.status & MSTATUS_MPP_MASK) != MSTATUS_MPP_M) //solo in kernel mode (se in user mode -> program trap)
+    if((syscallState->status & MSTATUS_MPP_MASK) != MSTATUS_MPP_M) //solo in kernel mode (se in user mode -> program trap)
     {   
+        klog_print("sono qui");
         RELEASE_LOCK(&Global_Lock);
         TRAPHandler(syscallState, cpuid);    
         return;
@@ -496,7 +506,6 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
 
 void TLBrefillHandler() {
     ACQUIRE_LOCK(&Global_Lock);
-    klog_print("caio");
     unsigned int cpuid = getPRID();
     state_t *StatoCPU = GET_EXCEPTION_STATE_PTR(cpuid);
     

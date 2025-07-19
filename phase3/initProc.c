@@ -14,6 +14,7 @@ volatile unsigned int SwapTableSemaphore = 1;
 
 void tester()
 {
+    klog_print("tester() called - starting initialization");
     for(int i = 0; i < POOLSIZE; i++)
     {
         SwapPool[i] = (RAMSTART + (64 * PAGESIZE) + (NCPU * PAGESIZE)) + (i * 0x1000);
@@ -38,7 +39,7 @@ void tester()
     {
         //Inizializzazione dello stato
         Stato[i].mie = MIE_ALL;
-        Stato[i].status = (MSTATUS_MPIE_MASK  |  MSTATUS_MIE_MASK);
+        Stato[i].status = (MSTATUS_MPIE_MASK  |  MSTATUS_MIE_MASK | MSTATUS_MPP_U);
         Stato[i].pc_epc = UPROCSTARTADDR;
         Stato[i].reg_sp = USERSTACKTOP;
         Stato[i].cause = 0;    
@@ -66,8 +67,15 @@ void tester()
         int result = SYSCALL(CREATEPROCESS, &Stato[i], 0, &Uproc[i]);
         if (result < 0)
         {
+            klog_print("PANIC: Failed to create U-proc");
             PANIC();
+        } else {
+            klog_print("U-proc created successfully");
         }
         
     }
+    
+    klog_print("tester() finished - terminating");
+    // Il processo tester deve terminare per permettere agli U-proc di essere schedulati
+    SYSCALL(TERMPROCESS, 0, 0, 0);
 }

@@ -5,12 +5,17 @@ static volatile unsigned int FIFO = 0;
 void Pager(){
     support_t *sPtr = SYSCALL(GETSUPPORTPTR, 0, 0, 0);
     
+    klog_print("Pager called for ASID: ");
+    klog_print_dec(sPtr->sup_asid);
+    
     // Punto 2-3: Determinare la causa dell'eccezione TLB
     if((sPtr->sup_exceptState[PGFAULTEXCEPT].cause & CAUSE_EXCCODE_MASK) == EXC_MOD) {
         // TLB-Modification exception - trattare come program trap
+        klog_print("Pager: TLB-Modification exception, calling P3TRAPHandler");
         P3TRAPHandler(sPtr);
     }
     else {
+        klog_print("Pager: TLB miss, handling page fault");
         // Punto 4: Acquisire mutua esclusione sulla Swap Pool table
         SYSCALL(PASSEREN, &SwapTableSemaphore, 0, 0);
         
@@ -127,6 +132,7 @@ void Pager(){
         // Punto 14: Rilasciare mutua esclusione
         SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
         
+        klog_print("Pager: Returning control to U-proc");
         // Punto 15: Ritornare controllo al processo
         LDST(&sPtr->sup_exceptState[PGFAULTEXCEPT]);
     }

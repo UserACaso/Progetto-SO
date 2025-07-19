@@ -8,67 +8,67 @@
     "devices": {
         "flash0": {
             "enabled": true,
-            "file": "testers/strConcat.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/testers/strConcat.uriscv"
         },
         "flash1": {
             "enabled": true,
-            "file": "testers/fibEight.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/testers/fibEight.uriscv"
         },
         "flash2": {
             "enabled": true,
-            "file": "testers/terminalReader.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/testers/terminalReader.uriscv"
         },
         "flash3": {
             "enabled": true,
-            "file": "testers/fibEleven.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/testers/fibEleven.uriscv"
         },
         "flash4": {
             "enabled": true,
-            "file": "testers/terminalTest5.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/testers/terminalTest5.uriscv"
         },
         "flash5": {
             "enabled": true,
-            "file": "testers/terminalTest2.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/testers/terminalTest2.uriscv"
         },
         "flash6": {
             "enabled": true,
-            "file": "testers/terminalTest3.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/testers/terminalTest3.uriscv"
         },
         "flash7": {
             "enabled": true,
-            "file": "testers/printerTest.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/testers/printerTest.uriscv"
         },
         "printer0": {
             "enabled": true,
-            "file": "printer0.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/printer0.uriscv"
         },
         "printer1": {
             "enabled": true,
-            "file": "printer1.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/printer1.uriscv"
         },
         "printer2": {
             "enabled": true,
-            "file": "printer2.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/printer2.uriscv"
         },
         "printer3": {
             "enabled": true,
-            "file": "printer3.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/printer3.uriscv"
         },
         "printer4": {
             "enabled": true,
-            "file": "printer4.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/printer4.uriscv"
         },
         "printer5": {
             "enabled": true,
-            "file": "printer5.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/printer5.uriscv"
         },
         "printer6": {
             "enabled": true,
-            "file": "printer6.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/printer6.uriscv"
         },
         "printer7": {
             "enabled": true,
-            "file": "printer7.uriscv"
+            "file": "/home/user/Desktop/Progetto-SO-main/printer7.uriscv"
         },
         "terminal0": {
             "enabled": true,
