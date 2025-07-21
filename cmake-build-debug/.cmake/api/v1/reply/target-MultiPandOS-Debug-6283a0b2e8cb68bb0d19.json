@@ -254,7 +254,7 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "phase2/klog.c",
+			"path" : "phase2/p2test.c",
 			"sourceGroupIndex" : 0
 		},
 		{

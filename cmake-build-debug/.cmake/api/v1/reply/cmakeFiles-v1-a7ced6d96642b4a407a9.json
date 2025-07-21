@@ -21,6 +21,11 @@
 		{
 			"isCMake" : true,
 			"isExternal" : true,
+			"path" : "/home/user/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.31/Modules/CMakeUnixFindMake.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
 			"path" : "/home/user/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.31/Modules/CMakeSystemSpecificInitialize.cmake"
 		},
 		{
@@ -539,8 +544,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "/home/user/Desktop/Progetto-SO-main/cmake-build-debug",
-		"source" : "/home/user/Desktop/Progetto-SO-main"
+		"build" : "/home/user/Desktop/Progetto-SO-Phase3/cmake-build-debug",
+		"source" : "/home/user/Desktop/Progetto-SO-Phase3"
 	},
 	"version" : 
 	{

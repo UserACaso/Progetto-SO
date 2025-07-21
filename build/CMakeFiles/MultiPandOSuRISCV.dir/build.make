@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/user/Desktop/Progetto-SO-main
+CMAKE_SOURCE_DIR = /home/user/Desktop/Progetto-SO-Phase3
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/user/Desktop/Progetto-SO-main/build
+CMAKE_BINARY_DIR = /home/user/Desktop/Progetto-SO-Phase3/build
 
 # Utility rule file for MultiPandOSuRISCV.
 
@@ -67,7 +67,7 @@ include CMakeFiles/MultiPandOSuRISCV.dir/compiler_depend.make
 include CMakeFiles/MultiPandOSuRISCV.dir/progress.make
 
 CMakeFiles/MultiPandOSuRISCV: MultiPandOS
-	uriscv-elf2uriscv -k /home/user/Desktop/Progetto-SO-main/build/MultiPandOS
+	uriscv-elf2uriscv -k /home/user/Desktop/Progetto-SO-Phase3/build/MultiPandOS
 
 MultiPandOSuRISCV: CMakeFiles/MultiPandOSuRISCV
 MultiPandOSuRISCV: CMakeFiles/MultiPandOSuRISCV.dir/build.make
@@ -82,6 +82,6 @@ CMakeFiles/MultiPandOSuRISCV.dir/clean:
 .PHONY : CMakeFiles/MultiPandOSuRISCV.dir/clean
 
 CMakeFiles/MultiPandOSuRISCV.dir/depend:
-	cd /home/user/Desktop/Progetto-SO-main/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/user/Desktop/Progetto-SO-main /home/user/Desktop/Progetto-SO-main /home/user/Desktop/Progetto-SO-main/build /home/user/Desktop/Progetto-SO-main/build /home/user/Desktop/Progetto-SO-main/build/CMakeFiles/MultiPandOSuRISCV.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/user/Desktop/Progetto-SO-Phase3/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/user/Desktop/Progetto-SO-Phase3 /home/user/Desktop/Progetto-SO-Phase3 /home/user/Desktop/Progetto-SO-Phase3/build /home/user/Desktop/Progetto-SO-Phase3/build /home/user/Desktop/Progetto-SO-Phase3/build/CMakeFiles/MultiPandOSuRISCV.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/MultiPandOSuRISCV.dir/depend
 

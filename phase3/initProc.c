@@ -14,10 +14,9 @@ volatile unsigned int SwapTableSemaphore = 1;
 
 void tester()
 {
-    klog_print("tester() called - starting initialization");
     for(int i = 0; i < POOLSIZE; i++)
     {
-        SwapPool[i] = (RAMSTART + (64 * PAGESIZE) + (NCPU * PAGESIZE)) + (i * 0x1000);
+        SwapPool[i] = (void *)(RAMSTART + (64 * PAGESIZE) + (NCPU * PAGESIZE)) + (i * 0x1000);
         
         SwapTable[i].sw_asid = -1;
         SwapTable[i].sw_pageNo = -1;
@@ -50,6 +49,7 @@ void tester()
         Uproc[i].sup_asid = (i+1);        
 
         //Context
+        //klog_print_dec(i);
         Uproc[i].sup_exceptContext[PGFAULTEXCEPT].pc = (memaddr)Pager;
         Uproc[i].sup_exceptContext[GENERALEXCEPT].pc = (memaddr)GeneralExceptionHandler;
         Uproc[i].sup_exceptContext[PGFAULTEXCEPT].status = MSTATUS_MPP_M;
@@ -58,24 +58,24 @@ void tester()
         Uproc[i].sup_exceptContext[GENERALEXCEPT].stackPtr = &Uproc[i].sup_stackGen[499];
         
         //PageTable
-        for(int j = 0; j < USERPGTBLSIZE; j++)
-        {
-            unsigned int VPN = VPN_START + j;
+        for(int j = 0; j < USERPGTBLSIZE; j++){
+            unsigned int VPN;
+            if(j == USERPGTBLSIZE - 1) {
+                // Stack page (entry 31)
+                VPN = 0xBFFFF;
+            } else {
+                // Text & data pages (entries 0-30)
+                VPN = VPN_START + j;
+            }
             Uproc[i].sup_privatePgTbl[j].pte_entryHI = (VPN << VPNSHIFT) | ((i+1) << ASIDSHIFT);
             Uproc[i].sup_privatePgTbl[j].pte_entryLO = (DIRTYON & ~VALIDON);
         }
         int result = SYSCALL(CREATEPROCESS, &Stato[i], 0, &Uproc[i]);
         if (result < 0)
         {
-            klog_print("PANIC: Failed to create U-proc");
             PANIC();
-        } else {
-            klog_print("U-proc created successfully");
         }
         
     }
     
-    klog_print("tester() finished - terminating");
-    // Il processo tester deve terminare per permettere agli U-proc di essere schedulati
-    SYSCALL(TERMPROCESS, 0, 0, 0);
 }

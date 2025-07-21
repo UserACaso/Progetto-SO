@@ -1,4 +1,5 @@
 #include "./headers/exceptions.h"
+#include "klog.c"
 
 #define TERM0ADDR 0x10000254
 
@@ -55,7 +56,7 @@ void Terminator(pcb_PTR p) // Pass Up or Die
 */
 
 void CreateProcess(state_t* syscallState, pcb_PTR corrente){
-
+    
     pcb_PTR newP = allocPcb(); //allocazione pcb
 
     if (newP == NULL) { //se l'allocazione fallisce
@@ -65,12 +66,6 @@ void CreateProcess(state_t* syscallState, pcb_PTR corrente){
         support_t* newSupport = (support_t*) syscallState->reg_a3; //ottengo il puntatore alla struttura di supporto (se non esiste è NULL)
         newP->p_s = *newState;
         newP->p_supportStruct = newSupport;
-        
-        if (newSupport != NULL) {
-            klog_print("CreateProcess: Support struct assigned");
-        } else {
-            klog_print("CreateProcess: Support struct is NULL");
-        }
 
         insertProcQ(&Ready_Queue, newP);     // lo inserisco nella ready queue
         insertChild(corrente, newP);         // lo aggiungo come figlio del processo corrente
@@ -429,16 +424,12 @@ void TRAPHandler(state_t* syscallState, unsigned int cpuid) {
 
     if (corrente->p_supportStruct == NULL) //termino tutti i processi correlati al processo corrente e se stesso
     {
-        klog_print("TRAPHandler: No support struct, PID: ");
-        klog_print_dec(corrente->p_pid);
-        klog_print(" terminating");
         Terminator(corrente);
         RELEASE_LOCK(&Global_Lock);
         scheduler();
     }
     else //passed up
     {
-        klog_print("TRAPHandler: Doing Pass Up to GeneralExceptionHandler");
         corrente->p_supportStruct->sup_exceptState[GENERALEXCEPT] = *syscallState;
         context_t temp = corrente->p_supportStruct->sup_exceptContext[GENERALEXCEPT];
         RELEASE_LOCK(&Global_Lock);
@@ -454,7 +445,7 @@ void SYSCALLHandler(state_t* syscallState, unsigned int cpuid){
 
     if((syscallState->status & MSTATUS_MPP_MASK) != MSTATUS_MPP_M) //solo in kernel mode (se in user mode -> program trap)
     {   
-        klog_print("sono qui");
+        //klog_print("questo qua");
         RELEASE_LOCK(&Global_Lock);
         TRAPHandler(syscallState, cpuid);    
         return;
@@ -508,11 +499,21 @@ void TLBrefillHandler() {
     ACQUIRE_LOCK(&Global_Lock);
     unsigned int cpuid = getPRID();
     state_t *StatoCPU = GET_EXCEPTION_STATE_PTR(cpuid);
-    
-    unsigned int p = ENTRYHI_GET_VPN(StatoCPU->entry_hi); //una pagetable è fatta di 31 entry: la VPN (Virtual Page Number) mi permette di trovare il numero di pagina, ma non 
-                                                         //conosco l'indirizzo che poi dovrò utilizzare per la privatePgTbl.
-    
     pcb_PTR current = Current_Process[cpuid];
+    unsigned int entryHi = StatoCPU->entry_hi;
+    unsigned int vpn = StatoCPU->entry_hi >> 12;
+    unsigned int p;
+    //klog_print(" ");
+    //klog_print_hex((vpn));
+    //klog_print(" ");
+    if(vpn >= 0x80000 && vpn <= 0x8001E) {
+        p = vpn - 0x80000;  // Pages 0-30 per text/data
+    } else if(vpn == 0xBFFFF) {
+        p = 31;  // Page 31 per lo stack
+    } else {
+        //klog_print(" Halt ");
+        HALT();
+    }
     support_t *Supporto = current->p_supportStruct;
     pteEntry_t Entry = Supporto->sup_privatePgTbl[p];
     setENTRYHI(Entry.pte_entryHI);
@@ -520,5 +521,5 @@ void TLBrefillHandler() {
     TLBWR();
     RELEASE_LOCK(&Global_Lock);
     LDST(StatoCPU);
-    
 }
+     

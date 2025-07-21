@@ -1,4 +1,4 @@
-/home/user/Desktop/Progetto-SO-main/cmake-build-debug/CMakeFiles/MultiPandOS.dir
-/home/user/Desktop/Progetto-SO-main/cmake-build-debug/CMakeFiles/MultiPandOSuRISCV.dir
-/home/user/Desktop/Progetto-SO-main/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/user/Desktop/Progetto-SO-main/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/user/Desktop/Progetto-SO-Phase3/cmake-build-debug/CMakeFiles/MultiPandOS.dir
+/home/user/Desktop/Progetto-SO-Phase3/cmake-build-debug/CMakeFiles/MultiPandOSuRISCV.dir
+/home/user/Desktop/Progetto-SO-Phase3/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/user/Desktop/Progetto-SO-Phase3/cmake-build-debug/CMakeFiles/rebuild_cache.dir

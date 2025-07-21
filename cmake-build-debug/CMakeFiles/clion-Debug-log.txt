@@ -1,4 +1,4 @@
-/home/user/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/home/user/.local/share/JetBrains/Toolbox/apps/clion/bin/ninja/linux/x64/ninja -G Ninja -S /home/user/Desktop/Progetto-SO-main -B /home/user/Desktop/Progetto-SO-main/cmake-build-debug
+/home/user/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" -S /home/user/Desktop/Progetto-SO-Phase3 -B /home/user/Desktop/Progetto-SO-Phase3/cmake-build-debug
 -- The C compiler identification is GNU 12.2.0
 -- The ASM compiler identification is GNU
 -- Found assembler: /usr/bin/cc
@@ -7,6 +7,6 @@
 -- Check for working C compiler: /usr/bin/cc - skipped
 -- Detecting C compile features
 -- Detecting C compile features - done
--- Configuring done (1.8s)
+-- Configuring done (1.0s)
 -- Generating done (0.0s)
--- Build files have been written to: /home/user/Desktop/Progetto-SO-main/cmake-build-debug
+-- Build files have been written to: /home/user/Desktop/Progetto-SO-Phase3/cmake-build-debug

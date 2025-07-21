@@ -195,7 +195,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/user/Desktop/Progetto-SO-main/cmake-build-debug"
+			"value" : "/home/user/Desktop/Progetto-SO-Phase3/cmake-build-debug"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -518,22 +518,6 @@
 			"value" : ""
 		},
 		{
-			"name" : "CMAKE_EXPORT_BUILD_DATABASE",
-			"properties" : 
-			[
-				{
-					"name" : "ADVANCED",
-					"value" : "1"
-				},
-				{
-					"name" : "HELPSTRING",
-					"value" : "Enable/Disable output of build database during the build."
-				}
-			],
-			"type" : "BOOL",
-			"value" : ""
-		},
-		{
 			"name" : "CMAKE_EXPORT_COMPILE_COMMANDS",
 			"properties" : 
 			[
@@ -571,7 +555,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/user/Desktop/Progetto-SO-main/cmake-build-debug/CMakeFiles/pkgRedirects"
+			"value" : "/home/user/Desktop/Progetto-SO-Phase3/cmake-build-debug/CMakeFiles/pkgRedirects"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -583,7 +567,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "Ninja"
+			"value" : "Unix Makefiles"
 		},
 		{
 			"name" : "CMAKE_GENERATOR_INSTANCE",
@@ -631,7 +615,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/user/Desktop/Progetto-SO-main"
+			"value" : "/home/user/Desktop/Progetto-SO-Phase3"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -678,12 +662,16 @@
 			"properties" : 
 			[
 				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Path to a program."
 				}
 			],
-			"type" : "UNINITIALIZED",
-			"value" : "/home/user/.local/share/JetBrains/Toolbox/apps/clion/bin/ninja/linux/x64/ninja"
+			"type" : "FILEPATH",
+			"value" : "/usr/bin/gmake"
 		},
 		{
 			"name" : "CMAKE_MODULE_LINKER_FLAGS",
@@ -1179,7 +1167,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/user/Desktop/Progetto-SO-main/cmake-build-debug"
+			"value" : "/home/user/Desktop/Progetto-SO-Phase3/cmake-build-debug"
 		},
 		{
 			"name" : "MultiPandOS_IS_TOP_LEVEL",
@@ -1203,7 +1191,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/user/Desktop/Progetto-SO-main"
+			"value" : "/home/user/Desktop/Progetto-SO-Phase3"
 		},
 		{
 			"name" : "_CMAKE_C_LINKER_PUSHPOP_STATE_SUPPORTED",

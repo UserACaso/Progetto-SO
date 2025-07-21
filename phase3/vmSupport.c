@@ -1,31 +1,39 @@
 #include "./headers/vmSupport.h"
+#include "./headers/sysSupport.h"
 
 static volatile unsigned int FIFO = 0;
 
 void Pager(){
     support_t *sPtr = SYSCALL(GETSUPPORTPTR, 0, 0, 0);
     
-    klog_print("Pager called for ASID: ");
-    klog_print_dec(sPtr->sup_asid);
-    
     // Punto 2-3: Determinare la causa dell'eccezione TLB
     if((sPtr->sup_exceptState[PGFAULTEXCEPT].cause & CAUSE_EXCCODE_MASK) == EXC_MOD) {
         // TLB-Modification exception - trattare come program trap
-        klog_print("Pager: TLB-Modification exception, calling P3TRAPHandler");
         P3TRAPHandler(sPtr);
     }
     else {
-        klog_print("Pager: TLB miss, handling page fault");
         // Punto 4: Acquisire mutua esclusione sulla Swap Pool table
         SYSCALL(PASSEREN, &SwapTableSemaphore, 0, 0);
         
         // Punto 5: Determinare il numero della pagina mancante
-        unsigned int pageNo = ENTRYHI_GET_VPN(sPtr->sup_exceptState[PGFAULTEXCEPT].entry_hi);
+        unsigned int vpn = sPtr->sup_exceptState[PGFAULTEXCEPT].entry_hi >> 12;
         unsigned int p_asid = sPtr->sup_asid;
+        
+        // Convertire VPN in indice della Page Table (0-31)
+        unsigned int pageNo;
+        if(vpn >= 0x80000 && vpn <= 0x8001E) {
+            pageNo = vpn - 0x80000;  // Pages 0-30 per text/data
+        } else if(vpn == 0xBFFFF) {
+            pageNo = 31;  // Page 31 per lo stack
+        } else {
+            // VPN non valido - trattare come errore
+            SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
+            P3TRAPHandler(sPtr);
+        }
         
         // Punto 6: Controllare se la pagina è già caricata nella swap pool
         for(int i = 0; i < POOLSIZE; i++) {
-            if(SwapTable[i].sw_asid == p_asid && SwapTable[i].sw_pageNo == pageNo) {
+            if(SwapTable[i].sw_asid == p_asid && SwapTable[i].sw_pageNo == pageNo && (SwapTable[i].sw_pte->pte_entryLO & VALIDON)) {
                 // La pagina è già nella swap pool, aggiornare il TLB se necessario
                 unsigned int oldStatus = getSTATUS();
                 unsigned int newStatus = oldStatus & ~MSTATUS_MIE_MASK;
@@ -40,7 +48,12 @@ void Pager(){
                     setENTRYHI(SwapTable[i].sw_pte->pte_entryHI);
                     setENTRYLO(SwapTable[i].sw_pte->pte_entryLO);
                     TLBWI();
+                } else {
+                    setENTRYHI(SwapTable[i].sw_pte->pte_entryHI);
+                    setENTRYLO(SwapTable[i].sw_pte->pte_entryLO);
+                    TLBWR();
                 }
+                
                 
                 setSTATUS(oldStatus);
                 
@@ -77,12 +90,12 @@ void Pager(){
             // Punto 9c: Aggiornare il backing store (scrivere su flash)
             int deviceNo = SwapTable[frameToUse].sw_asid - 1;  // ASID 1-8 → Device 0-7
             devreg_t* flash_device = DEV_REG_ADDR(IL_FLASH, deviceNo);
-            flash_device->dtp.data0 = SwapPool[frameToUse];
+            flash_device->dtp.data0 = (memaddr)SwapPool[frameToUse];
             unsigned int command = (SwapTable[frameToUse].sw_pageNo << 8) | FLASHWRITE;
             int status = SYSCALL(DOIO, &flash_device->dtp.command, command, 0);
-            
             // Gestire errori I/O come program trap
-            if(status != READY) {
+            if((status & 0xFF) != READY) {
+                setSTATUS(oldStatus);                 
                 SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
                 P3TRAPHandler(sPtr);
             }
@@ -95,8 +108,11 @@ void Pager(){
         unsigned int command = (pageNo << 8) | FLASHREAD;
         int status = SYSCALL(DOIO, &flash_device->dtp.command, command, 0);
         
+        
         // Gestire errori I/O come program trap
-        if(status != READY) {
+        //klog_print_hex(status & 0xFF);
+        //klog_print(" ");
+        if((status & 0xFF) != READY) {
             SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
             P3TRAPHandler(sPtr);
         }
@@ -107,7 +123,9 @@ void Pager(){
         SwapTable[frameToUse].sw_pte = &sPtr->sup_privatePgTbl[pageNo];
         
         // Punto 12: Aggiornare la Page Table entry
-        SwapTable[frameToUse].sw_pte->pte_entryLO = VALIDON | DIRTYON | (frameToUse << ENTRYLO_PFN_BIT);
+        unsigned int pfn = ((memaddr)SwapPool[frameToUse]) >> 12;   // 4 KiB → shift 12
+        //pte->pte_entryLO = VALIDON | DIRTYON | (pfn << ENTRYLO_PFN_BIT);
+        SwapTable[frameToUse].sw_pte->pte_entryLO = VALIDON | DIRTYON | (pfn << ENTRYLO_PFN_BIT);
         
         // Punto 13: Aggiornare il TLB
         unsigned int oldStatus = getSTATUS();
@@ -132,7 +150,6 @@ void Pager(){
         // Punto 14: Rilasciare mutua esclusione
         SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
         
-        klog_print("Pager: Returning control to U-proc");
         // Punto 15: Ritornare controllo al processo
         LDST(&sPtr->sup_exceptState[PGFAULTEXCEPT]);
     }

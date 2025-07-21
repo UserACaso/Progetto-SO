@@ -41,7 +41,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "MultiPandOS::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-MultiPandOS-Debug-a174c77748e2191d857e.json",
+					"jsonFile" : "target-MultiPandOS-Debug-6283a0b2e8cb68bb0d19.json",
 					"name" : "MultiPandOS",
 					"projectIndex" : 0
 				},
@@ -58,8 +58,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/home/user/Desktop/Progetto-SO-main/cmake-build-debug",
-		"source" : "/home/user/Desktop/Progetto-SO-main"
+		"build" : "/home/user/Desktop/Progetto-SO-Phase3/cmake-build-debug",
+		"source" : "/home/user/Desktop/Progetto-SO-Phase3"
 	},
 	"version" : 
 	{

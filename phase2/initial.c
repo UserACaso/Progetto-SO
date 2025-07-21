@@ -30,7 +30,9 @@ void exceptionHandler() {
 
     // Interrupt?     Exception code (excode)
     //     0          000101010101010101010101010101010
-
+    klog_print(" ");
+    klog_print_dec(excode);
+    klog_print(" ");
     if (CAUSE_IS_INT(cause)) {
         
         InterruptHandler(GET_EXCEPTION_STATE_PTR(getPRID()), excode);

@@ -14,5 +14,4 @@ extern volatile unsigned int SwapTableSemaphore;
 extern void tester();
 extern void Pager();
 extern void GeneralExceptionHandler();
-
 #endif
