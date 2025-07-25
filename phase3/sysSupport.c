@@ -1,51 +1,61 @@
 #include "./headers/sysSupport.h"
 
+// Handler generale per le eccezioni del Support Level
 void GeneralExceptionHandler() {
     support_t *sPtr = SYSCALL(GETSUPPORTPTR, 0, 0, 0);
+    
     switch (sPtr->sup_exceptState[GENERALEXCEPT].cause & CAUSE_EXCCODE_MASK)
     {
-    case 8:
+    case 8:  // SYSCALL da kernel
         P3SYSCALLHandler(sPtr);
         break;
-    case 11:
+    case 11: // SYSCALL da user
         P3SYSCALLHandler(sPtr);
         break;
-    default:
+    default: // Program Trap
         P3TRAPHandler(sPtr); 
         break;
     }
 }
 
+// SYS2
 void Terminate(support_t *sPtr) {
     SYSCALL(PASSEREN, (memaddr)&SwapTableSemaphore, 0, 0);
+    
+    // Libera pagine del processo nella tabella di swap
     for (int i = 0; i < POOLSIZE; i++)
     {
         if (sPtr->sup_asid == SwapTable[i].sw_asid) {
             SwapTable[i].sw_asid = -1;
             SwapTable[i].sw_pageNo = -1;
-            SwapTable[i].sw_pte = NULL;        
+            SwapTable[i].sw_pte = NULL;
         }
     }
+    
     SYSCALL(VERHOGEN, (memaddr)&SwapTableSemaphore, 0, 0);
     SYSCALL(TERMPROCESS, 0, 0, 0);
 }
 
+// SYS3
 void WritePrinter(support_t *sPtr) {
     state_t *syscallState = &sPtr->sup_exceptState[GENERALEXCEPT];
-    //utilizzare systemp call passren e veroghen per semforo P3
+    
+    // Validazione parametri
     if(syscallState->reg_a2 < 0 || syscallState->reg_a2 > 128)
         SYSCALL(TERMPROCESS, 0, 0, 0);
 
     int count = 0;
-    char     *s      = syscallState->reg_a1;
-    memaddr *base    = (memaddr *)(DEV_REG_ADDR(IL_PRINTER, (sPtr->sup_asid-1)));
+    char *s = syscallState->reg_a1;
+    memaddr *base = (memaddr *)(DEV_REG_ADDR(IL_PRINTER, (sPtr->sup_asid-1)));
     memaddr *command = base + 1;
-    memaddr  status;
+    memaddr status;
 
     SYSCALL(PASSEREN, (int)&P3SemaphorePrinter[sPtr->sup_asid-1], 0, 0); 
+    
     while (*s != EOS && count < syscallState->reg_a2) {
         memaddr value = PRINTCHR | (((memaddr)*s) << 8);
-        status         = SYSCALL(DOIO, (int)command, (int)value, 0);
+        status = SYSCALL(DOIO, (int)command, (int)value, 0);
+        
         if ((status & 0xFF) != READY) {
             SYSCALL(VERHOGEN, (int)&P3SemaphorePrinter[sPtr->sup_asid-1], 0, 0); 
             syscallState->reg_a0 = -status;
@@ -55,28 +65,33 @@ void WritePrinter(support_t *sPtr) {
         count++;
         s++;
     }
+    
     SYSCALL(VERHOGEN, (int)&P3SemaphorePrinter[sPtr->sup_asid-1], 0, 0); 
     syscallState->reg_a0 = count;
     syscallState->pc_epc += 4;
     LDST(syscallState);
 }
 
+// SYS4
 void WriteTerminal(support_t *sPtr){
     state_t *syscallState = &sPtr->sup_exceptState[GENERALEXCEPT];
-    //utilizzare systemp call passren e veroghen per semforo P3
+    
+    // Validazione parametri
     if(syscallState->reg_a2 < 0 || syscallState->reg_a2 > 128)
         SYSCALL(TERMPROCESS, 0, 0, 0);
 
     int count = 0;
-    char     *s      = syscallState->reg_a1;
-    memaddr *base    = (memaddr *)(DEV_REG_ADDR(IL_TERMINAL, (sPtr->sup_asid-1)));
+    char *s = syscallState->reg_a1;
+    memaddr *base = (memaddr *)(DEV_REG_ADDR(IL_TERMINAL, (sPtr->sup_asid-1)));
     memaddr *command = base + 3;
-    memaddr  status;
+    memaddr status;
 
     SYSCALL(PASSEREN, (int)&P3SemaphoreTerminalTransmitter[sPtr->sup_asid-1], 0, 0);
+    
     while (*s != EOS && count < syscallState->reg_a2) {
         memaddr value = PRINTCHR | (((memaddr)*s) << 8);
-        status         = SYSCALL(DOIO, (int)command, (int)value, 0);
+        status = SYSCALL(DOIO, (int)command, (int)value, 0);
+        
         if ((status & 0xFF) != RECVD) {
             SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalTransmitter[sPtr->sup_asid-1], 0, 0); 
             syscallState->reg_a0 = -status;
@@ -86,37 +101,43 @@ void WriteTerminal(support_t *sPtr){
         count++;
         s++;
     } 
+    
     SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalTransmitter[sPtr->sup_asid-1], 0, 0); 
     syscallState->reg_a0 = count;
     syscallState->pc_epc += 4;
     LDST(syscallState);
 }
 
+// SYS5
 void ReadTerminal(support_t *sPtr) {
-     state_t *syscallState = &sPtr->sup_exceptState[GENERALEXCEPT];
-    //utilizzare systemp call passren e veroghen per semforo P3
- 
+    state_t *syscallState = &sPtr->sup_exceptState[GENERALEXCEPT];
 
     int count = 0;
-    char     *s      = syscallState->reg_a1;
-    memaddr *base    = (memaddr *)(DEV_REG_ADDR(IL_TERMINAL, (sPtr->sup_asid-1)));
+    char *s = syscallState->reg_a1;
+    memaddr *base = (memaddr *)(DEV_REG_ADDR(IL_TERMINAL, (sPtr->sup_asid-1)));
     memaddr *command = base + 3;
-    memaddr  status;
+    memaddr status;
     char carattere;
 
     SYSCALL(PASSEREN, (int)&P3SemaphoreTerminalReceiver[sPtr->sup_asid-1], 0, 0); 
+    
+    // Loop di ricezione (max 127 caratteri)
     while (count < syscallState->reg_a2 && count < 127) {
         memaddr value = RECEIVECHAR;
-        status         = SYSCALL(DOIO, (int)command, (int)value, 0);
+        status = SYSCALL(DOIO, (int)command, (int)value, 0);
+        
         if ((status & 0xFF) != RECVD) {
             SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalReceiver[sPtr->sup_asid-1], 0, 0); 
             syscallState->reg_a0 = -status;
             syscallState->pc_epc += 4;
             LDST(syscallState);
         }
+        
         carattere = (status >> 8) & 0xFF;
+        
+        // Controllo fine riga/stringa
         if (carattere == '\n' || carattere == EOS) {
-            *s = EOS; 
+            *s = EOS;
             break;
         } else {
             *s = carattere;
@@ -125,15 +146,18 @@ void ReadTerminal(support_t *sPtr) {
         s++;
     }
 
+    // Assicura terminazione stringa
     if (count > 0 && *(s-1) != EOS) {
         *s = EOS;
     }
+    
     SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalReceiver[sPtr->sup_asid-1], 0, 0); 
     syscallState->reg_a0 = count;
     syscallState->pc_epc += 4;
     LDST(syscallState);
 }
 
+// system call del Support Level
 void P3SYSCALLHandler(support_t *sPtr){
     switch (sPtr->sup_exceptState[GENERALEXCEPT].reg_a0)
     {
@@ -153,24 +177,27 @@ void P3SYSCALLHandler(support_t *sPtr){
         ReadTerminal(sPtr);
         break;
         
-    default:
+    default: // System call non riconosciuta
         P3TRAPHandler(sPtr);
         break;
     }
 }
 
+// Handler per Program Trap
 void P3TRAPHandler(support_t *sPtr)
 {   
     SYSCALL(PASSEREN, &SwapTableSemaphore, 0, 0);
+    
+    // Pulisce tabella di swap del processo
     for (int i = 0; i < POOLSIZE; i++)
     {
         if (sPtr->sup_asid == SwapTable[i].sw_asid) {
             SwapTable[i].sw_asid = -1;
             SwapTable[i].sw_pageNo = -1;
-            SwapTable[i].sw_pte = NULL;        
+            SwapTable[i].sw_pte = NULL;
         }
     }
+    
     SYSCALL(VERHOGEN, &SwapTableSemaphore, 0, 0);
     SYSCALL(TERMPROCESS, 0, 0, 0);
-} 
-
+}
