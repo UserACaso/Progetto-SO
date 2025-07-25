@@ -87,7 +87,7 @@ void Pager(){
             setSTATUS(oldStatus);
             
             // Punto 9c: Aggiornare il backing store (scrivere su flash)
-            int deviceNo = SwapTable[frameToUse].sw_asid - 1;  // ASID 1-8 → Device 0-7
+            int deviceNo = SwapTable[frameToUse].sw_asid - 1;  // ASID 1-8 -> Device 0-7
             devreg_t* flash_device = DEV_REG_ADDR(IL_FLASH, deviceNo);
             flash_device->dtp.data0 = (memaddr)SwapPool[frameToUse];
             unsigned int command = (SwapTable[frameToUse].sw_pageNo << 8) | FLASHWRITE;
