@@ -42,12 +42,12 @@ void WritePrinter(support_t *sPtr) {
     memaddr *command = base + 1;
     memaddr  status;
 
-    SYSCALL(PASSEREN, (int)&P3SemaphorePrinter[sPtr->sup_asid-1], 0, 0); /* P(sem_term_mut) */
+    SYSCALL(PASSEREN, (int)&P3SemaphorePrinter[sPtr->sup_asid-1], 0, 0); 
     while (*s != EOS && count < syscallState->reg_a2) {
         memaddr value = PRINTCHR | (((memaddr)*s) << 8);
         status         = SYSCALL(DOIO, (int)command, (int)value, 0);
         if ((status & 0xFF) != READY) {
-            SYSCALL(VERHOGEN, (int)&P3SemaphorePrinter[sPtr->sup_asid-1], 0, 0); /* V(sem_term_mut) */
+            SYSCALL(VERHOGEN, (int)&P3SemaphorePrinter[sPtr->sup_asid-1], 0, 0); 
             syscallState->reg_a0 = -status;
             syscallState->pc_epc += 4;
             LDST(syscallState);
@@ -55,7 +55,7 @@ void WritePrinter(support_t *sPtr) {
         count++;
         s++;
     }
-    SYSCALL(VERHOGEN, (int)&P3SemaphorePrinter[sPtr->sup_asid-1], 0, 0); /* V(sem_term_mut) */
+    SYSCALL(VERHOGEN, (int)&P3SemaphorePrinter[sPtr->sup_asid-1], 0, 0); 
     syscallState->reg_a0 = count;
     syscallState->pc_epc += 4;
     LDST(syscallState);
@@ -73,12 +73,12 @@ void WriteTerminal(support_t *sPtr){
     memaddr *command = base + 3;
     memaddr  status;
 
-    SYSCALL(PASSEREN, (int)&P3SemaphoreTerminalTransmitter[sPtr->sup_asid-1], 0, 0); /* P(sem_term_mut) */
+    SYSCALL(PASSEREN, (int)&P3SemaphoreTerminalTransmitter[sPtr->sup_asid-1], 0, 0);
     while (*s != EOS && count < syscallState->reg_a2) {
         memaddr value = PRINTCHR | (((memaddr)*s) << 8);
         status         = SYSCALL(DOIO, (int)command, (int)value, 0);
         if ((status & 0xFF) != RECVD) {
-            SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalTransmitter[sPtr->sup_asid-1], 0, 0); /* V(sem_term_mut) */
+            SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalTransmitter[sPtr->sup_asid-1], 0, 0); 
             syscallState->reg_a0 = -status;
             syscallState->pc_epc += 4;
             LDST(syscallState);
@@ -86,7 +86,7 @@ void WriteTerminal(support_t *sPtr){
         count++;
         s++;
     } 
-    SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalTransmitter[sPtr->sup_asid-1], 0, 0); /* V(sem_term_mut) */
+    SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalTransmitter[sPtr->sup_asid-1], 0, 0); 
     syscallState->reg_a0 = count;
     syscallState->pc_epc += 4;
     LDST(syscallState);
@@ -104,12 +104,12 @@ void ReadTerminal(support_t *sPtr) {
     memaddr  status;
     char carattere;
 
-    SYSCALL(PASSEREN, (int)&P3SemaphoreTerminalReceiver[sPtr->sup_asid-1], 0, 0); /* P(sem_term_mut) */
+    SYSCALL(PASSEREN, (int)&P3SemaphoreTerminalReceiver[sPtr->sup_asid-1], 0, 0); 
     while (count < syscallState->reg_a2 && count < 127) {
         memaddr value = RECEIVECHAR;
         status         = SYSCALL(DOIO, (int)command, (int)value, 0);
         if ((status & 0xFF) != RECVD) {
-            SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalReceiver[sPtr->sup_asid-1], 0, 0); /* V(sem_term_mut) */
+            SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalReceiver[sPtr->sup_asid-1], 0, 0); 
             syscallState->reg_a0 = -status;
             syscallState->pc_epc += 4;
             LDST(syscallState);
@@ -128,7 +128,7 @@ void ReadTerminal(support_t *sPtr) {
     if (count > 0 && *(s-1) != EOS) {
         *s = EOS;
     }
-    SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalReceiver[sPtr->sup_asid-1], 0, 0); /* V(sem_term_mut) */
+    SYSCALL(VERHOGEN, (int)&P3SemaphoreTerminalReceiver[sPtr->sup_asid-1], 0, 0); 
     syscallState->reg_a0 = count;
     syscallState->pc_epc += 4;
     LDST(syscallState);

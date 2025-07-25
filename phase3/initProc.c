@@ -31,9 +31,6 @@ void tester()
         P3SemaphoreTerminalTransmitter[i] = 1;
     }
 
-    
-    
-    //SYSCALL(CREATEPROCESS, state_t *statep, 0, support_t *supportp);
     for(int i = 0; i < 8; i++)
     {
         //Inizializzazione dello stato

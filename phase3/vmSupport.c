@@ -10,8 +10,7 @@ void Pager(){
     if((sPtr->sup_exceptState[PGFAULTEXCEPT].cause & CAUSE_EXCCODE_MASK) == EXC_MOD) {
         // TLB-Modification exception - trattare come program trap
         P3TRAPHandler(sPtr);
-    }
-    else {
+    } else {
         // Punto 4: Acquisire mutua esclusione sulla Swap Pool table
         SYSCALL(PASSEREN, &SwapTableSemaphore, 0, 0);
         
@@ -109,7 +108,6 @@ void Pager(){
         int status = SYSCALL(DOIO, &flash_device->dtp.command, command, 0);
         
         
-        // Gestire errori I/O come program trap
         //klog_print_hex(status & 0xFF);
         //klog_print(" ");
         if((status & 0xFF) != READY) {

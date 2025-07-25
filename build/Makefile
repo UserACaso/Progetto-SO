@@ -262,30 +262,6 @@ phase2/interrupts.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase2/interrupts.c.s
 .PHONY : phase2/interrupts.c.s
 
-phase2/p2test.o: phase2/p2test.c.o
-.PHONY : phase2/p2test.o
-
-# target to build an object file
-phase2/p2test.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase2/p2test.c.o
-.PHONY : phase2/p2test.c.o
-
-phase2/p2test.i: phase2/p2test.c.i
-.PHONY : phase2/p2test.i
-
-# target to preprocess a source file
-phase2/p2test.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase2/p2test.c.i
-.PHONY : phase2/p2test.c.i
-
-phase2/p2test.s: phase2/p2test.c.s
-.PHONY : phase2/p2test.s
-
-# target to generate assembly for a file
-phase2/p2test.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MultiPandOS.dir/build.make CMakeFiles/MultiPandOS.dir/phase2/p2test.c.s
-.PHONY : phase2/p2test.c.s
-
 phase2/scheduler.o: phase2/scheduler.c.o
 .PHONY : phase2/scheduler.o
 
@@ -423,9 +399,6 @@ help:
 	@echo "... phase2/interrupts.o"
 	@echo "... phase2/interrupts.i"
 	@echo "... phase2/interrupts.s"
-	@echo "... phase2/p2test.o"
-	@echo "... phase2/p2test.i"
-	@echo "... phase2/p2test.s"
 	@echo "... phase2/scheduler.o"
 	@echo "... phase2/scheduler.i"
 	@echo "... phase2/scheduler.s"
